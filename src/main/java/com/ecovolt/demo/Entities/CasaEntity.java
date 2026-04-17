@@ -27,4 +27,6 @@ public class CasaEntity {
     // "mappedBy" apunta a la variable 'casa' en HabitacionEntity
     @OneToMany(mappedBy = "casa", cascade = CascadeType.ALL)
     private List<HabitacionEntity> habitaciones;
+
+    //holaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa :P
 }
