@@ -29,4 +29,5 @@ public class CasaEntity {
     private List<HabitacionEntity> habitaciones;
 
     //holaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa :P
+    //Como tas Copil?
 }
