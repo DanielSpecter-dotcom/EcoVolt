@@ -18,7 +18,6 @@ public class ModelMapperConfig {
         modelMapper.getConfiguration().setMatchingStrategy(MatchingStrategies.STRICT);
         modelMapper.createTypeMap(UsuarioEntity.class, UsuarioResponseDto.class);
         modelMapper.createTypeMap(UsuarioCreateDto.class, UsuarioEntity.class);
-
         return modelMapper;
     }
 }
