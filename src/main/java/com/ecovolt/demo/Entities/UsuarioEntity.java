@@ -4,6 +4,8 @@ import com.ecovolt.demo.Enums.TipoUsuario;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "usuarios")
 @Data
@@ -16,13 +18,13 @@ public class UsuarioEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @Column(unique = true)
     private String dni;
 
     @Column(nullable = false)
     private String nombre;
 
-    @Column(nullable = false)
+    @Column
     private String apellido;
 
     @Column(nullable = false, unique = true)
@@ -37,4 +39,35 @@ public class UsuarioEntity {
     @Column(name = "tipo_usuario", nullable = false)
     @Enumerated(EnumType.STRING)
     private TipoUsuario tipoUsuario;
+
+    @Column(name = "nombre_empresa")
+    private String nombreEmpresa;
+
+    @Column(name = "ruc")
+    private String ruc;
+
+    @Column(name = "foto_perfil_url")
+    private String fotoPerfilUrl;
+
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    @Builder.Default
+    private boolean activo = false;
+
+    @Column(name = "verification_token")
+    private String verificationToken;
+
+    @Column(name = "verification_token_expires_at")
+    private LocalDateTime verificationTokenExpiresAt;
+
+    @Column(name = "notificar_consumo_excesivo", nullable = false, columnDefinition = "boolean default true")
+    @Builder.Default
+    private boolean notificarConsumoExcesivo = true;
+
+    @Column(name = "notificar_uso_prolongado", nullable = false, columnDefinition = "boolean default true")
+    @Builder.Default
+    private boolean notificarUsoProlongado = true;
+
+    @Column(name = "notificar_reporte_semanal", nullable = false, columnDefinition = "boolean default true")
+    @Builder.Default
+    private boolean notificarReporteSemanal = true;
 }
