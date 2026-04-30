@@ -1,28 +1,35 @@
 package com.ecovolt.demo.Service;
 
-import com.ecovolt.demo.Config.ModelMapperConfig;
+import com.ecovolt.demo.Dto.Request.NotificationSettingsDto;
+import com.ecovolt.demo.Dto.Request.UpdatePasswordDto;
+import com.ecovolt.demo.Dto.Request.UpdateUserProfileDto;
 import com.ecovolt.demo.Dto.Request.UsuarioCreateDto;
 import com.ecovolt.demo.Dto.Response.ReniecResponse;
 import com.ecovolt.demo.Dto.Response.UsuarioResponseDto;
 import com.ecovolt.demo.Entities.UsuarioEntity;
+import com.ecovolt.demo.Exception.BadRequestException;
+import com.ecovolt.demo.Exception.ResourceNotFoundException;
 import com.ecovolt.demo.Repository.UsuarioRepository;
 import com.ecovolt.demo.Service.FeingService.ReniecClient;
+import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@RequiredArgsConstructor
 public class UsuarioService {
-    @Autowired
-    private UsuarioRepository usuarioRepository;
-    @Autowired
-    private ModelMapper modelMapper;
-    @Autowired
-    private ReniecClient reniecClient;
+    private final UsuarioRepository usuarioRepository;
+    private final ModelMapper modelMapper;
+    private final ReniecClient reniecClient;
+    private final BCryptPasswordEncoder passwordEncoder;
+
     @Value("${api.token}")
     private String apiToken;
 
+    @Transactional
     public UsuarioResponseDto saveUsuario(UsuarioCreateDto usuarioDto) {
         // 1. Validar formato del DNI
         String dni = usuarioDto.getDni();
@@ -68,6 +75,49 @@ public class UsuarioService {
         UsuarioResponseDto usuarioResponseDto = new UsuarioResponseDto();
         modelMapper.map(usuarioGuardado, usuarioResponseDto);
         return usuarioResponseDto;
+    }
+
+    @Transactional
+    public UsuarioResponseDto updateProfile(Long id, UpdateUserProfileDto request) {
+        UsuarioEntity usuario = findUser(id);
+
+        usuario.setNombre(request.getNombre().trim());
+
+        return toResponse(usuarioRepository.save(usuario));
+    }
+
+    @Transactional
+    public void updatePassword(Long id, UpdatePasswordDto request) {
+        UsuarioEntity usuario = findUser(id);
+
+        if (!passwordEncoder.matches(request.getContrasenaActual(), usuario.getContrasena())) {
+            throw new BadRequestException("La contrasena actual no coincide");
+        }
+
+        usuario.setContrasena(passwordEncoder.encode(request.getNuevaContrasena()));
+        usuarioRepository.save(usuario);
+    }
+
+    @Transactional
+    public UsuarioResponseDto updateNotificationSettings(Long id, NotificationSettingsDto request) {
+        UsuarioEntity usuario = findUser(id);
+
+        usuario.setNotificarConsumoExcesivo(request.getConsumoExcesivo());
+        usuario.setNotificarUsoProlongado(request.getUsoProlongado());
+        usuario.setNotificarReporteSemanal(request.getReporteSemanal());
+
+        return toResponse(usuarioRepository.save(usuario));
+    }
+
+    private UsuarioEntity findUser(Long id) {
+        return usuarioRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
+    }
+
+    private UsuarioResponseDto toResponse(UsuarioEntity usuario) {
+        UsuarioResponseDto response = new UsuarioResponseDto();
+        modelMapper.map(usuario, response);
+        return response;
     }
 
 }
