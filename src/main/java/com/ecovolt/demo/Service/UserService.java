@@ -26,20 +26,7 @@ public class UserService {
     public UsuarioResponseDto updateProfile(Long id, UpdateUserProfileDto request) {
         UsuarioEntity usuario = findUser(id);
 
-        boolean hasNombre = request.getNombre() != null && !request.getNombre().trim().isEmpty();
-        boolean hasFoto = request.getFotoPerfilUrl() != null && !request.getFotoPerfilUrl().trim().isEmpty();
-
-        if (!hasNombre && !hasFoto) {
-            throw new BadRequestException("Debe enviar al menos el nombre o la foto de perfil");
-        }
-
-        if (hasNombre) {
-            usuario.setNombre(request.getNombre().trim());
-        }
-
-        if (hasFoto) {
-            usuario.setFotoPerfilUrl(request.getFotoPerfilUrl().trim());
-        }
+        usuario.setNombre(request.getNombre().trim());
 
         return toResponse(usuarioRepository.save(usuario));
     }

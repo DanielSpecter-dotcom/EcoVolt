@@ -46,9 +46,6 @@ public class UsuarioEntity {
     @Column(name = "ruc")
     private String ruc;
 
-    @Column(name = "foto_perfil_url")
-    private String fotoPerfilUrl;
-
     @Column(nullable = false, columnDefinition = "boolean default false")
     @Builder.Default
     private boolean activo = false;

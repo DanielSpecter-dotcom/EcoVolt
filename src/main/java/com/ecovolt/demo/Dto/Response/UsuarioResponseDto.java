@@ -18,9 +18,6 @@ public class UsuarioResponseDto {
     @JsonProperty("tipo_usuario")
     private TipoUsuario tipoUsuario;
 
-    @JsonProperty("foto_perfil_url")
-    private String fotoPerfilUrl;
-
     private boolean activo;
 
     @JsonProperty("consumo_excesivo")
