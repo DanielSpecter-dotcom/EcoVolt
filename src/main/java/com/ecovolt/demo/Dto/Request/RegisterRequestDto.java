@@ -14,9 +14,9 @@ import lombok.Setter;
 @Setter
 public class RegisterRequestDto {
 
-    @NotBlank(message = "El nombre es obligatorio")
-    @Size(max = 120, message = "El nombre no debe superar 120 caracteres")
-    private String nombre;
+    @NotBlank(message = "El DNI es obligatorio")
+    @Pattern(regexp = "^\\d{8}$", message = "El DNI debe tener 8 digitos numericos")
+    private String dni;
 
     @NotBlank(message = "El correo es obligatorio")
     @Email(message = "El correo no tiene un formato valido")

@@ -5,6 +5,8 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "usuarios")
@@ -67,4 +69,14 @@ public class UsuarioEntity {
     @Column(name = "notificar_reporte_semanal", nullable = false, columnDefinition = "boolean default true")
     @Builder.Default
     private boolean notificarReporteSemanal = true;
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "usuarios_roles",
+            joinColumns = @JoinColumn(name = "usuario_id"),
+            inverseJoinColumns = @JoinColumn(name = "rol_id"),
+            uniqueConstraints = @UniqueConstraint(columnNames = {"usuario_id", "rol_id"})
+    )
+    @Builder.Default
+    private Set<RolEntity> roles = new HashSet<>();
 }

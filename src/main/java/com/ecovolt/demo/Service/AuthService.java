@@ -3,10 +3,12 @@ package com.ecovolt.demo.Service;
 import com.ecovolt.demo.Dto.Request.RegisterRequestDto;
 import com.ecovolt.demo.Dto.Request.ResendVerificationRequestDto;
 import com.ecovolt.demo.Dto.Request.VerifyEmailRequestDto;
+import com.ecovolt.demo.Dto.Response.ReniecResponse;
 import com.ecovolt.demo.Dto.Response.VerificationSentResponseDto;
 import com.ecovolt.demo.Entities.CasaEntity;
 import com.ecovolt.demo.Entities.HabitacionEntity;
 import com.ecovolt.demo.Entities.HistoricoEntity;
+import com.ecovolt.demo.Entities.RolEntity;
 import com.ecovolt.demo.Entities.UsuarioEntity;
 import com.ecovolt.demo.Entities.VirtualDeviceEntity;
 import com.ecovolt.demo.Enums.TipoUsuario;
@@ -15,9 +17,12 @@ import com.ecovolt.demo.Exception.ResourceNotFoundException;
 import com.ecovolt.demo.Repository.CasaRepository;
 import com.ecovolt.demo.Repository.HabitacionRepository;
 import com.ecovolt.demo.Repository.HistoricoRepository;
+import com.ecovolt.demo.Repository.RolRepository;
 import com.ecovolt.demo.Repository.UsuarioRepository;
 import com.ecovolt.demo.Repository.VirtualDeviceRepository;
+import com.ecovolt.demo.Service.FeingService.ReniecClient;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,26 +36,41 @@ import java.util.UUID;
 public class AuthService {
 
     private static final int TOKEN_EXPIRATION_HOURS = 24;
+    private static final String DEFAULT_OWNER_ROLE = "PROPIETARIO";
 
     private final UsuarioRepository usuarioRepository;
+    private final RolRepository rolRepository;
     private final CasaRepository casaRepository;
     private final HabitacionRepository habitacionRepository;
     private final VirtualDeviceRepository virtualDeviceRepository;
     private final HistoricoRepository historicoRepository;
+    private final ReniecClient reniecClient;
     private final BCryptPasswordEncoder passwordEncoder;
+
+    @Value("${api.token}")
+    private String apiToken;
 
     @Transactional
     public VerificationSentResponseDto register(RegisterRequestDto request) {
         String correo = normalizeEmail(request.getCorreo());
+        String dni = request.getDni().trim();
 
         if (usuarioRepository.existsByCorreo(correo)) {
             throw new BadRequestException("El correo ya se encuentra registrado");
         }
 
+        if (usuarioRepository.existsByDni(dni)) {
+            throw new BadRequestException("El DNI ya se encuentra registrado");
+        }
+
+        ReniecResponse reniecResponse = findPersonByDni(dni);
+
         UsuarioEntity usuario = UsuarioEntity.builder()
-                .nombre(request.getNombre().trim())
+                .dni(dni)
+                .nombre(reniecResponse.getFirstName())
+                .apellido(buildLastNames(reniecResponse))
                 .correo(correo)
-                .username(buildUsername(correo))
+                .username(buildUsername(reniecResponse))
                 .contrasena(passwordEncoder.encode(request.getContrasena()))
                 .tipoUsuario(request.getTipoUso())
                 .nombreEmpresa(trimToNull(request.getNombreEmpresa()))
@@ -59,6 +79,7 @@ public class AuthService {
                 .verificationToken(generateToken())
                 .verificationTokenExpiresAt(LocalDateTime.now().plusHours(TOKEN_EXPIRATION_HOURS))
                 .build();
+        usuario.getRoles().add(findOrCreateRole(DEFAULT_OWNER_ROLE));
 
         UsuarioEntity usuarioGuardado = usuarioRepository.save(usuario);
 
@@ -164,12 +185,44 @@ public class AuthService {
         return UUID.randomUUID().toString();
     }
 
+    private RolEntity findOrCreateRole(String roleName) {
+        return rolRepository.findByNombre(roleName)
+                .orElseGet(() -> rolRepository.save(RolEntity.builder()
+                        .nombre(roleName)
+                        .build()));
+    }
+
+    private ReniecResponse findPersonByDni(String dni) {
+        try {
+            ReniecResponse response = reniecClient.getPersonaInfo(dni, apiToken);
+            if (response == null || response.getFirstName() == null || response.getFirstLastName() == null) {
+                throw new BadRequestException("No se encontro informacion para el DNI brindado");
+            }
+            return response;
+        } catch (BadRequestException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            throw new BadRequestException("Error al consultar el servicio de Reniec");
+        }
+    }
+
     private String normalizeEmail(String correo) {
         return correo.trim().toLowerCase();
     }
 
-    private String buildUsername(String correo) {
-        return correo.substring(0, correo.indexOf('@'));
+    private String buildUsername(ReniecResponse response) {
+        String firstName = response.getFirstName().split("\\s+")[0].toLowerCase();
+        return firstName + "." + response.getFirstLastName().toLowerCase();
+    }
+
+    private String buildLastNames(ReniecResponse response) {
+        String firstLastName = trimToNull(response.getFirstLastName());
+        String secondLastName = trimToNull(response.getSecondLastName());
+
+        if (secondLastName == null) {
+            return firstLastName;
+        }
+        return firstLastName + " " + secondLastName;
     }
 
     private String trimToNull(String value) {

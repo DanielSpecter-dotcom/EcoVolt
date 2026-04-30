@@ -3,79 +3,26 @@ package com.ecovolt.demo.Service;
 import com.ecovolt.demo.Dto.Request.NotificationSettingsDto;
 import com.ecovolt.demo.Dto.Request.UpdatePasswordDto;
 import com.ecovolt.demo.Dto.Request.UpdateUserProfileDto;
-import com.ecovolt.demo.Dto.Request.UsuarioCreateDto;
-import com.ecovolt.demo.Dto.Response.ReniecResponse;
 import com.ecovolt.demo.Dto.Response.UsuarioResponseDto;
+import com.ecovolt.demo.Entities.RolEntity;
 import com.ecovolt.demo.Entities.UsuarioEntity;
 import com.ecovolt.demo.Exception.BadRequestException;
 import com.ecovolt.demo.Exception.ResourceNotFoundException;
 import com.ecovolt.demo.Repository.UsuarioRepository;
-import com.ecovolt.demo.Service.FeingService.ReniecClient;
 import lombok.RequiredArgsConstructor;
-import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class UsuarioService {
+
     private final UsuarioRepository usuarioRepository;
-    private final ModelMapper modelMapper;
-    private final ReniecClient reniecClient;
     private final BCryptPasswordEncoder passwordEncoder;
-
-    @Value("${api.token}")
-    private String apiToken;
-
-    @Transactional
-    public UsuarioResponseDto saveUsuario(UsuarioCreateDto usuarioDto) {
-        // 1. Validar formato del DNI
-        String dni = usuarioDto.getDni();
-        if (dni == null || dni.length() != 8 || !dni.matches("^\\d+$")) {
-            throw new IllegalArgumentException("El DNI debe tener 8 dígitos numéricos");
-        }
-
-        // 2. Consultar a la API externa de Reniec
-        ReniecResponse response = null;
-        try {
-            // Nota: Verifica si tu API requiere que concatenes "Bearer " antes del token.
-            // Si es así, sería: getPersonaInfo(dni, "Bearer " + apiToken)
-            response = reniecClient.getPersonaInfo(dni, apiToken);
-        } catch (Exception ex) {
-            throw new RuntimeException("Error al consultar el servicio de Reniec", ex);
-        }
-
-        if (response == null || response.getFirstName() == null) {
-            throw new RuntimeException("No se encontró información para el DNI brindado");
-        }
-
-        // 3. Mapear datos del DTO a la Entidad
-        UsuarioEntity usuarioEntity = new UsuarioEntity();
-        modelMapper.map(usuarioDto, usuarioEntity);
-
-        //Mapear username
-        String username = response
-                .getFirstName()
-                .split("\\s+")[0]
-                .toLowerCase() + "." +
-                response.getFirstLastName().toLowerCase();
-
-        // 4. Sobrescribir los nombres y apellidos reales obtenidos de Reniec
-        // Ojo: En tu entidad demo los campos están en singular (nombre, apellido)
-        usuarioEntity.setNombre(response.getFirstName());
-        usuarioEntity.setApellido(response.getFirstLastName() + " " + response.getSecondLastName());
-        usuarioEntity.setUsername(username);
-
-        // 5. Guardar en Base de Datos
-        UsuarioEntity usuarioGuardado = usuarioRepository.save(usuarioEntity);
-
-        // 6. Mapear la Entidad guardada al DTO de Respuesta
-        UsuarioResponseDto usuarioResponseDto = new UsuarioResponseDto();
-        modelMapper.map(usuarioGuardado, usuarioResponseDto);
-        return usuarioResponseDto;
-    }
 
     @Transactional
     public UsuarioResponseDto updateProfile(Long id, UpdateUserProfileDto request) {
@@ -116,8 +63,25 @@ public class UsuarioService {
 
     private UsuarioResponseDto toResponse(UsuarioEntity usuario) {
         UsuarioResponseDto response = new UsuarioResponseDto();
-        modelMapper.map(usuario, response);
+        response.setId(usuario.getId());
+        response.setNombre(usuario.getNombre());
+        response.setApellido(usuario.getApellido());
+        response.setUsername(usuario.getUsername());
+        response.setCorreo(usuario.getCorreo());
+        response.setTipoUsuario(usuario.getTipoUsuario());
+        response.setActivo(usuario.isActivo());
+        response.setNotificarConsumoExcesivo(usuario.isNotificarConsumoExcesivo());
+        response.setNotificarUsoProlongado(usuario.isNotificarUsoProlongado());
+        response.setNotificarReporteSemanal(usuario.isNotificarReporteSemanal());
+        response.setRoles(mapRoleNames(usuario));
         return response;
     }
 
+    private List<String> mapRoleNames(UsuarioEntity usuario) {
+        return usuario.getRoles()
+                .stream()
+                .map(RolEntity::getNombre)
+                .sorted(Comparator.naturalOrder())
+                .toList();
+    }
 }

@@ -6,6 +6,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.List;
+
 @Getter
 @Setter
 public class UsuarioResponseDto {
@@ -28,4 +30,6 @@ public class UsuarioResponseDto {
 
     @JsonProperty("reporte_semanal")
     private boolean notificarReporteSemanal;
+
+    private List<String> roles;
 }

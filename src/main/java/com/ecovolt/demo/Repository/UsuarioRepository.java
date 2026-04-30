@@ -9,6 +9,8 @@ public interface UsuarioRepository extends JpaRepository<UsuarioEntity, Long> {
 
     boolean existsByCorreo(String correo);
 
+    boolean existsByDni(String dni);
+
     Optional<UsuarioEntity> findByCorreo(String correo);
 
     Optional<UsuarioEntity> findByVerificationToken(String verificationToken);

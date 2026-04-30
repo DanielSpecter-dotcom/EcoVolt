@@ -20,7 +20,7 @@ public class DeviceController {
 
     private final DeviceService deviceService;
 
-    @PostMapping({"", "/"})
+    @PostMapping
     public ResponseEntity<ApiResponse<DeviceResponseDto>> create(@Valid @RequestBody DeviceCreateDto request) {
         DeviceResponseDto data = deviceService.create(request);
         return ResponseEntity.status(HttpStatus.CREATED)
