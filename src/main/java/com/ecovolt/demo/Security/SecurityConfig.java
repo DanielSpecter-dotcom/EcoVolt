@@ -28,15 +28,23 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        // Rutas publicas para autenticacion y documentacion OpenAPI/Swagger.
                         .requestMatchers(
                                 "/api/v1/auth/**",
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html"
                         ).permitAll()
+                        // Endpoints del propietario protegidos por rol.
+                        .requestMatchers(
+                                "/api/v1/consumption/**",
+                                "/api/v1/reports/**",
+                                "/api/v1/alerts/**"
+                        ).hasRole("PROPIETARIO")
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())
+                // El filtro JWT valida el Bearer token antes del filtro de username/password.
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
