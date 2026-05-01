@@ -1,9 +1,11 @@
 package com.ecovolt.demo.Controller;
 
+import com.ecovolt.demo.Dto.Request.LoginRequestDto;
 import com.ecovolt.demo.Dto.Request.RegisterRequestDto;
 import com.ecovolt.demo.Dto.Request.ResendVerificationRequestDto;
 import com.ecovolt.demo.Dto.Request.VerifyEmailRequestDto;
 import com.ecovolt.demo.Dto.Response.ApiResponse;
+import com.ecovolt.demo.Dto.Response.LoginResponseDto;
 import com.ecovolt.demo.Dto.Response.VerificationSentResponseDto;
 import com.ecovolt.demo.Service.AuthService;
 import jakarta.validation.Valid;
@@ -21,6 +23,12 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
     private final AuthService authService;
+
+    @PostMapping("/login")
+    public ResponseEntity<ApiResponse<LoginResponseDto>> login(@Valid @RequestBody LoginRequestDto request) {
+        LoginResponseDto data = authService.login(request);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Autenticacion exitosa", data));
+    }
 
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<VerificationSentResponseDto>> register(

@@ -1,8 +1,10 @@
 package com.ecovolt.demo.Service;
 
+import com.ecovolt.demo.Dto.Request.LoginRequestDto;
 import com.ecovolt.demo.Dto.Request.RegisterRequestDto;
 import com.ecovolt.demo.Dto.Request.ResendVerificationRequestDto;
 import com.ecovolt.demo.Dto.Request.VerifyEmailRequestDto;
+import com.ecovolt.demo.Dto.Response.LoginResponseDto;
 import com.ecovolt.demo.Dto.Response.ReniecResponse;
 import com.ecovolt.demo.Dto.Response.VerificationSentResponseDto;
 import com.ecovolt.demo.Entities.CasaEntity;
@@ -20,22 +22,29 @@ import com.ecovolt.demo.Repository.HistoricoRepository;
 import com.ecovolt.demo.Repository.RolRepository;
 import com.ecovolt.demo.Repository.UsuarioRepository;
 import com.ecovolt.demo.Repository.VirtualDeviceRepository;
+import com.ecovolt.demo.Security.JwtService;
 import com.ecovolt.demo.Service.FeingService.ReniecClient;
 import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class AuthService {
 
     private static final int TOKEN_EXPIRATION_HOURS = 24;
+    private static final long VERIFICATION_TOKEN_EXPIRATION_MILLIS = TOKEN_EXPIRATION_HOURS * 60L * 60L * 1000L;
     private static final String DEFAULT_OWNER_ROLE = "PROPIETARIO";
 
     private final UsuarioRepository usuarioRepository;
@@ -45,10 +54,24 @@ public class AuthService {
     private final VirtualDeviceRepository virtualDeviceRepository;
     private final HistoricoRepository historicoRepository;
     private final ReniecClient reniecClient;
-    private final BCryptPasswordEncoder passwordEncoder;
+    private final PasswordEncoder passwordEncoder;
+    private final AuthenticationManager authenticationManager;
+    private final JwtService jwtService;
+    private final ModelMapper modelMapper;
 
     @Value("${api.token}")
     private String apiToken;
+
+    public LoginResponseDto login(LoginRequestDto request) {
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        normalizeEmail(request.getCorreo()),
+                        request.getContrasena()
+                )
+        );
+        String token = jwtService.generateToken((UserDetails) authentication.getPrincipal());
+        return new LoginResponseDto(token, "Bearer", jwtService.getExpirationSeconds());
+    }
 
     @Transactional
     public VerificationSentResponseDto register(RegisterRequestDto request) {
@@ -65,20 +88,17 @@ public class AuthService {
 
         ReniecResponse reniecResponse = findPersonByDni(dni);
 
-        UsuarioEntity usuario = UsuarioEntity.builder()
-                .dni(dni)
-                .nombre(reniecResponse.getFirstName())
-                .apellido(buildLastNames(reniecResponse))
-                .correo(correo)
-                .username(buildUsername(reniecResponse))
-                .contrasena(passwordEncoder.encode(request.getContrasena()))
-                .tipoUsuario(request.getTipoUso())
-                .nombreEmpresa(trimToNull(request.getNombreEmpresa()))
-                .ruc(trimToNull(request.getRuc()))
-                .activo(false)
-                .verificationToken(generateToken())
-                .verificationTokenExpiresAt(LocalDateTime.now().plusHours(TOKEN_EXPIRATION_HOURS))
-                .build();
+        UsuarioEntity usuario = modelMapper.map(request, UsuarioEntity.class);
+        usuario.setDni(dni);
+        usuario.setNombre(reniecResponse.getFirstName());
+        usuario.setApellido(buildLastNames(reniecResponse));
+        usuario.setCorreo(correo);
+        usuario.setUsername(buildUsername(reniecResponse));
+        usuario.setContrasena(passwordEncoder.encode(request.getContrasena()));
+        usuario.setNombreEmpresa(trimToNull(request.getNombreEmpresa()));
+        usuario.setRuc(trimToNull(request.getRuc()));
+        usuario.setActivo(false);
+        assignVerificationToken(usuario);
         usuario.getRoles().add(findOrCreateRole(DEFAULT_OWNER_ROLE));
 
         UsuarioEntity usuarioGuardado = usuarioRepository.save(usuario);
@@ -95,8 +115,7 @@ public class AuthService {
         UsuarioEntity usuario = usuarioRepository.findByVerificationToken(request.getToken())
                 .orElseThrow(() -> new BadRequestException("El token de verificacion no es valido"));
 
-        if (usuario.getVerificationTokenExpiresAt() == null
-                || usuario.getVerificationTokenExpiresAt().isBefore(LocalDateTime.now())) {
+        if (!isVerificationTokenValid(request.getToken(), usuario)) {
             throw new BadRequestException("El token de verificacion ha expirado");
         }
 
@@ -115,8 +134,7 @@ public class AuthService {
             throw new BadRequestException("La cuenta ya se encuentra activa");
         }
 
-        usuario.setVerificationToken(generateToken());
-        usuario.setVerificationTokenExpiresAt(LocalDateTime.now().plusHours(TOKEN_EXPIRATION_HOURS));
+        assignVerificationToken(usuario);
         UsuarioEntity usuarioGuardado = usuarioRepository.save(usuario);
 
         return simulateVerificationEmail(usuarioGuardado);
@@ -181,8 +199,24 @@ public class AuthService {
         );
     }
 
-    private String generateToken() {
-        return UUID.randomUUID().toString();
+    private void assignVerificationToken(UsuarioEntity usuario) {
+        String token = jwtService.generateEmailVerificationToken(
+                usuario.getCorreo(),
+                VERIFICATION_TOKEN_EXPIRATION_MILLIS
+        );
+        usuario.setVerificationToken(token);
+        usuario.setVerificationTokenExpiresAt(LocalDateTime.ofInstant(
+                jwtService.extractExpiration(token).toInstant(),
+                ZoneId.systemDefault()
+        ));
+    }
+
+    private boolean isVerificationTokenValid(String token, UsuarioEntity usuario) {
+        try {
+            return jwtService.isEmailVerificationTokenValid(token, usuario.getCorreo());
+        } catch (RuntimeException ex) {
+            return false;
+        }
     }
 
     private RolEntity findOrCreateRole(String roleName) {

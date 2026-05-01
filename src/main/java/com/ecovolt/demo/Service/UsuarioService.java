@@ -4,33 +4,32 @@ import com.ecovolt.demo.Dto.Request.NotificationSettingsDto;
 import com.ecovolt.demo.Dto.Request.UpdatePasswordDto;
 import com.ecovolt.demo.Dto.Request.UpdateUserProfileDto;
 import com.ecovolt.demo.Dto.Response.UsuarioResponseDto;
-import com.ecovolt.demo.Entities.RolEntity;
 import com.ecovolt.demo.Entities.UsuarioEntity;
 import com.ecovolt.demo.Exception.BadRequestException;
 import com.ecovolt.demo.Exception.ResourceNotFoundException;
 import com.ecovolt.demo.Repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.modelmapper.ModelMapper;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Comparator;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
-    private final BCryptPasswordEncoder passwordEncoder;
+    private final PasswordEncoder passwordEncoder;
+    private final ModelMapper modelMapper;
 
     @Transactional
     public UsuarioResponseDto updateProfile(Long id, UpdateUserProfileDto request) {
         UsuarioEntity usuario = findUser(id);
 
-        usuario.setNombre(request.getNombre().trim());
+        modelMapper.map(request, usuario);
+        usuario.setNombre(usuario.getNombre().trim());
 
-        return toResponse(usuarioRepository.save(usuario));
+        return modelMapper.map(usuarioRepository.save(usuario), UsuarioResponseDto.class);
     }
 
     @Transactional
@@ -49,11 +48,9 @@ public class UsuarioService {
     public UsuarioResponseDto updateNotificationSettings(Long id, NotificationSettingsDto request) {
         UsuarioEntity usuario = findUser(id);
 
-        usuario.setNotificarConsumoExcesivo(request.getConsumoExcesivo());
-        usuario.setNotificarUsoProlongado(request.getUsoProlongado());
-        usuario.setNotificarReporteSemanal(request.getReporteSemanal());
+        modelMapper.map(request, usuario);
 
-        return toResponse(usuarioRepository.save(usuario));
+        return modelMapper.map(usuarioRepository.save(usuario), UsuarioResponseDto.class);
     }
 
     private UsuarioEntity findUser(Long id) {
@@ -61,27 +58,4 @@ public class UsuarioService {
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
     }
 
-    private UsuarioResponseDto toResponse(UsuarioEntity usuario) {
-        UsuarioResponseDto response = new UsuarioResponseDto();
-        response.setId(usuario.getId());
-        response.setNombre(usuario.getNombre());
-        response.setApellido(usuario.getApellido());
-        response.setUsername(usuario.getUsername());
-        response.setCorreo(usuario.getCorreo());
-        response.setTipoUsuario(usuario.getTipoUsuario());
-        response.setActivo(usuario.isActivo());
-        response.setNotificarConsumoExcesivo(usuario.isNotificarConsumoExcesivo());
-        response.setNotificarUsoProlongado(usuario.isNotificarUsoProlongado());
-        response.setNotificarReporteSemanal(usuario.isNotificarReporteSemanal());
-        response.setRoles(mapRoleNames(usuario));
-        return response;
-    }
-
-    private List<String> mapRoleNames(UsuarioEntity usuario) {
-        return usuario.getRoles()
-                .stream()
-                .map(RolEntity::getNombre)
-                .sorted(Comparator.naturalOrder())
-                .toList();
-    }
 }

@@ -14,6 +14,7 @@ import com.ecovolt.demo.Repository.HistoricoRepository;
 import com.ecovolt.demo.Repository.UsuarioRepository;
 import com.ecovolt.demo.Repository.VirtualDeviceRepository;
 import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,6 +30,7 @@ public class DeviceService {
     private final HabitacionRepository habitacionRepository;
     private final VirtualDeviceRepository virtualDeviceRepository;
     private final HistoricoRepository historicoRepository;
+    private final ModelMapper modelMapper;
 
     @Transactional
     public DeviceResponseDto create(DeviceCreateDto request) {
@@ -47,24 +49,17 @@ public class DeviceService {
                         .casa(casa)
                         .build()));
 
-        VirtualDeviceEntity dispositivo = virtualDeviceRepository.save(VirtualDeviceEntity.builder()
-                .nombre(buildDeviceName(request.getTipoDispositivo()))
-                .tipo(request.getTipoDispositivo().trim())
-                .potenciaWatts(request.getPotenciaEstimadaWatts())
-                .activo(false)
-                .automatico(false)
-                .habitacion(habitacion)
-                .build());
+        VirtualDeviceEntity dispositivo = modelMapper.map(request, VirtualDeviceEntity.class);
+        dispositivo.setNombre(buildDeviceName(request.getTipoDispositivo()));
+        dispositivo.setTipo(request.getTipoDispositivo().trim());
+        dispositivo.setActivo(false);
+        dispositivo.setAutomatico(false);
+        dispositivo.setHabitacion(habitacion);
+        dispositivo = virtualDeviceRepository.save(dispositivo);
 
         historicoRepository.saveAll(buildSimulatedConsumption(dispositivo));
 
-        return DeviceResponseDto.builder()
-                .id(dispositivo.getId())
-                .nombre(dispositivo.getNombre())
-                .tipo(dispositivo.getTipo())
-                .potenciaWatts(dispositivo.getPotenciaWatts())
-                .habitacionId(habitacion.getId())
-                .build();
+        return modelMapper.map(dispositivo, DeviceResponseDto.class);
     }
 
     private List<HistoricoEntity> buildSimulatedConsumption(VirtualDeviceEntity dispositivo) {
