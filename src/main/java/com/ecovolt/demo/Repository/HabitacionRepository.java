@@ -8,4 +8,6 @@ import java.util.Optional;
 public interface HabitacionRepository extends JpaRepository<HabitacionEntity, Long> {
 
     Optional<HabitacionEntity> findFirstByCasaIdOrderByIdAsc(Long casaId);
+
+    Optional<HabitacionEntity> findByIdAndCasaUsuarioId(Long id, Long usuarioId);
 }
