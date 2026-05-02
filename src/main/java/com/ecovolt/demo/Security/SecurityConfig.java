@@ -40,7 +40,7 @@ public class SecurityConfig {
                                 "/api/v1/consumption/**",
                                 "/api/v1/reports/**",
                                 "/api/v1/alerts/**"
-                        ).hasRole("PROPIETARIO")
+                        ).hasAnyRole("PERSONAL", "EMPRESARIAL")
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())

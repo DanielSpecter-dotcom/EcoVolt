@@ -45,8 +45,6 @@ public class AuthService {
 
     private static final int TOKEN_EXPIRATION_HOURS = 24;
     private static final long VERIFICATION_TOKEN_EXPIRATION_MILLIS = TOKEN_EXPIRATION_HOURS * 60L * 60L * 1000L;
-    private static final String DEFAULT_OWNER_ROLE = "PROPIETARIO";
-
     private final UsuarioRepository usuarioRepository;
     private final RolRepository rolRepository;
     private final CasaRepository casaRepository;
@@ -99,7 +97,7 @@ public class AuthService {
         usuario.setRuc(trimToNull(request.getRuc()));
         usuario.setActivo(false);
         assignVerificationToken(usuario);
-        usuario.getRoles().add(findOrCreateRole(DEFAULT_OWNER_ROLE));
+        usuario.getRoles().add(findOrCreateRole(usuario.getTipoUsuario().name()));
 
         UsuarioEntity usuarioGuardado = usuarioRepository.save(usuario);
 
