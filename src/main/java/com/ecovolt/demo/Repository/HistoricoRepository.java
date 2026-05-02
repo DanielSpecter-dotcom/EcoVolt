@@ -13,4 +13,9 @@ public interface HistoricoRepository extends JpaRepository<HistoricoEntity, Long
     );
 
     List<HistoricoEntity> findByDispositivoHabitacionCasaUsuarioIdOrderByFechaRegistroDesc(Long usuarioId);
+
+    List<HistoricoEntity> findByDispositivoIdAndDispositivoHabitacionCasaUsuarioIdOrderByFechaRegistroDesc(
+            Long dispositivoId,
+            Long usuarioId
+    );
 }

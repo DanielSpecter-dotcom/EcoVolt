@@ -2,9 +2,10 @@ package com.ecovolt.demo.Controller;
 
 import com.ecovolt.demo.Dto.Response.ApiResponse;
 import com.ecovolt.demo.Dto.Response.ConsumptionCompareResponseDto;
+import com.ecovolt.demo.Dto.Response.ConsumptionResponseDto;
 import com.ecovolt.demo.Dto.Response.RoomConsumptionResponseDto;
 import com.ecovolt.demo.Security.CustomUserDetails;
-import com.ecovolt.demo.Service.ConsumptionService;
+import com.ecovolt.demo.Service.IConsumptionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -18,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class ConsumptionController {
 
-    private final ConsumptionService consumptionService;
+    private final IConsumptionService consumptionService;
 
     @GetMapping("/rooms/{id}")
     public ResponseEntity<ApiResponse<RoomConsumptionResponseDto>> getRoomConsumption(
@@ -33,5 +34,13 @@ public class ConsumptionController {
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         ConsumptionCompareResponseDto data = consumptionService.compareConsumption(userDetails.getId());
         return ResponseEntity.ok(new ApiResponse<>(true, "Comparacion de consumo obtenida exitosamente", data));
+    }
+
+    @GetMapping("/devices/{id}")
+    public ResponseEntity<ApiResponse<ConsumptionResponseDto>> getDeviceConsumption(
+            @PathVariable Long id,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        ConsumptionResponseDto data = consumptionService.getDeviceConsumption(id, userDetails.getId());
+        return ResponseEntity.ok(new ApiResponse<>(true, "Consumo del dispositivo obtenido exitosamente", data));
     }
 }

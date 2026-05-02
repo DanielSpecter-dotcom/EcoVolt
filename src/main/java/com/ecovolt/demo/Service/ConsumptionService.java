@@ -2,6 +2,7 @@ package com.ecovolt.demo.Service;
 
 import com.ecovolt.demo.Dto.Response.ConsumptionCompareItemDto;
 import com.ecovolt.demo.Dto.Response.ConsumptionCompareResponseDto;
+import com.ecovolt.demo.Dto.Response.ConsumptionResponseDto;
 import com.ecovolt.demo.Dto.Response.RoomConsumptionResponseDto;
 import com.ecovolt.demo.Entities.HabitacionEntity;
 import com.ecovolt.demo.Entities.HistoricoEntity;
@@ -9,10 +10,12 @@ import com.ecovolt.demo.Entities.VirtualDeviceEntity;
 import com.ecovolt.demo.Exception.ResourceNotFoundException;
 import com.ecovolt.demo.Repository.HabitacionRepository;
 import com.ecovolt.demo.Repository.HistoricoRepository;
+import com.ecovolt.demo.Repository.VirtualDeviceRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -21,11 +24,13 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class ConsumptionService {
+public class ConsumptionService implements IConsumptionService {
 
     private final HabitacionRepository habitacionRepository;
     private final HistoricoRepository historicoRepository;
+    private final VirtualDeviceRepository virtualDeviceRepository;
 
+    @Override
     @Transactional(readOnly = true)
     public RoomConsumptionResponseDto getRoomConsumption(Long roomId, Long userId) {
         HabitacionEntity room = habitacionRepository.findByIdAndCasaUsuarioId(roomId, userId)
@@ -54,6 +59,7 @@ public class ConsumptionService {
                 .build();
     }
 
+    @Override
     @Transactional(readOnly = true)
     public ConsumptionCompareResponseDto compareConsumption(Long userId) {
         List<HistoricoEntity> history = historicoRepository
@@ -64,6 +70,36 @@ public class ConsumptionService {
         return ConsumptionCompareResponseDto.builder()
                 .totalKwh(round(totalKwh))
                 .devices(devices)
+                .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ConsumptionResponseDto getDeviceConsumption(Long deviceId, Long userId) {
+        VirtualDeviceEntity device = virtualDeviceRepository.findByIdAndHabitacionCasaUsuarioId(deviceId, userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Dispositivo no encontrado"));
+
+        List<HistoricoEntity> history = historicoRepository
+                .findByDispositivoIdAndDispositivoHabitacionCasaUsuarioIdOrderByFechaRegistroDesc(deviceId, userId);
+
+        LocalDate today = LocalDate.now();
+        LocalDate weekStart = today.minusDays(6);
+        LocalDate monthStart = today.withDayOfMonth(1);
+
+        /*
+         * La capa de servicio consolida las lecturas automaticas del historial
+         * energetico y devuelve ventanas de consumo listas para dashboards.
+         */
+        double dailyKwh = sumFrom(history, today);
+        double weeklyKwh = sumBetween(history, weekStart, today);
+        double monthlyKwh = sumBetween(history, monthStart, today);
+
+        return ConsumptionResponseDto.builder()
+                .deviceId(device.getId())
+                .deviceName(device.getNombre())
+                .dailyKwh(round(dailyKwh))
+                .weeklyKwh(round(weeklyKwh))
+                .monthlyKwh(round(monthlyKwh))
                 .build();
     }
 
@@ -104,6 +140,23 @@ public class ConsumptionService {
                 .totalKwh(round(deviceTotal))
                 .percentage(round(percentage))
                 .build();
+    }
+
+    private double sumFrom(List<HistoricoEntity> history, LocalDate date) {
+        return history.stream()
+                .filter(item -> item.getFechaRegistro().toLocalDate().isEqual(date))
+                .mapToDouble(HistoricoEntity::getKwhConsumidos)
+                .sum();
+    }
+
+    private double sumBetween(List<HistoricoEntity> history, LocalDate start, LocalDate end) {
+        return history.stream()
+                .filter(item -> {
+                    LocalDate itemDate = item.getFechaRegistro().toLocalDate();
+                    return !itemDate.isBefore(start) && !itemDate.isAfter(end);
+                })
+                .mapToDouble(HistoricoEntity::getKwhConsumidos)
+                .sum();
     }
 
     private double round(double value) {
