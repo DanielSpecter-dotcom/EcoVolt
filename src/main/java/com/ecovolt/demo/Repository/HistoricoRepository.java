@@ -7,6 +7,8 @@ import java.util.List;
 
 public interface HistoricoRepository extends JpaRepository<HistoricoEntity, Long> {
 
+    List<HistoricoEntity> findByDispositivoId(Long dispositivoId);
+
     List<HistoricoEntity> findByDispositivoHabitacionIdAndDispositivoHabitacionCasaUsuarioIdOrderByFechaRegistroDesc(
             Long habitacionId,
             Long usuarioId

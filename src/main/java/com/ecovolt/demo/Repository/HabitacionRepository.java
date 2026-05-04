@@ -10,4 +10,6 @@ public interface HabitacionRepository extends JpaRepository<HabitacionEntity, Lo
     Optional<HabitacionEntity> findFirstByCasaIdOrderByIdAsc(Long casaId);
 
     Optional<HabitacionEntity> findByIdAndCasaUsuarioId(Long id, Long usuarioId);
+
+    Optional<HabitacionEntity> findByIdAndCasaId(Long id, Long casaId);
 }
