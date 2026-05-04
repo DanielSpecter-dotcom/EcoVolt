@@ -30,6 +30,9 @@ public class VirtualDeviceEntity {
     @Column(name = "automatico", nullable = false)
     private boolean automatico = false; // true = automático (rutinas), false = manual
 
+    @Column(name = "eliminado", nullable = false)
+    private boolean eliminado = false;
+
     @Column(name = "limite_kwh")
     private Double limiteKwh;
 

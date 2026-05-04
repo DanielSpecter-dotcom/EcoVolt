@@ -21,6 +21,12 @@ public class DeviceResponseDto {
     @JsonProperty("potencia_watts")
     private Double potenciaWatts;
 
+    private String status;
+    private String mode;
+
     @JsonProperty("habitacion_id")
     private Long habitacionId;
+
+    @JsonProperty("habitacion_nombre")
+    private String habitacionNombre;
 }

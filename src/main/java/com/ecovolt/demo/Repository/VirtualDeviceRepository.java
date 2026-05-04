@@ -11,4 +11,8 @@ public interface VirtualDeviceRepository extends JpaRepository<VirtualDeviceEnti
     Optional<VirtualDeviceEntity> findByIdAndHabitacionCasaUsuarioId(Long id, Long usuarioId);
 
     List<VirtualDeviceEntity> findByHabitacionCasaUsuarioId(Long usuarioId);
+
+    Optional<VirtualDeviceEntity> findByIdAndEliminadoFalse(Long id);
+
+    List<VirtualDeviceEntity> findByEliminadoFalseOrderByIdAsc();
 }

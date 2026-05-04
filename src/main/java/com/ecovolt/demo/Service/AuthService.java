@@ -161,6 +161,7 @@ public class AuthService {
                 .potenciaWatts(watts)
                 .activo(false)
                 .automatico(false)
+                .eliminado(false)
                 .habitacion(habitacion)
                 .build());
 
