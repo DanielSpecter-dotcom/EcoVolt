@@ -1,13 +1,13 @@
-package com.ecovolt.demo.Config;
+package com.ecovolt.demo.config;
 
-import com.ecovolt.demo.Dto.Request.DeviceCreateDto;
-import com.ecovolt.demo.Dto.Request.NotificationSettingsDto;
-import com.ecovolt.demo.Dto.Request.RegisterRequestDto;
-import com.ecovolt.demo.Dto.Response.DeviceResponseDto;
-import com.ecovolt.demo.Dto.Response.UsuarioResponseDto;
-import com.ecovolt.demo.Entities.RolEntity;
-import com.ecovolt.demo.Entities.UsuarioEntity;
-import com.ecovolt.demo.Entities.VirtualDeviceEntity;
+import com.ecovolt.demo.dtos.request.DeviceCreateDto;
+import com.ecovolt.demo.dtos.request.NotificationSettingsDto;
+import com.ecovolt.demo.dtos.request.RegisterRequestDto;
+import com.ecovolt.demo.dtos.response.DeviceResponseDto;
+import com.ecovolt.demo.dtos.response.UsuarioResponseDto;
+import com.ecovolt.demo.entities.Rol;
+import com.ecovolt.demo.entities.Usuario;
+import com.ecovolt.demo.entities.DispositivoVirtual;
 import org.modelmapper.Converter;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.TypeMap;
@@ -27,50 +27,50 @@ public class ModelMapperConfig {
 
         modelMapper.getConfiguration().setMatchingStrategy(MatchingStrategies.STRICT);
 
-        TypeMap<RegisterRequestDto, UsuarioEntity> registerRequestMap =
-                modelMapper.createTypeMap(RegisterRequestDto.class, UsuarioEntity.class);
+        TypeMap<RegisterRequestDto, Usuario> registerRequestMap =
+                modelMapper.createTypeMap(RegisterRequestDto.class, Usuario.class);
         registerRequestMap.addMappings(mapper -> {
-            mapper.skip(UsuarioEntity::setId);
-            mapper.map(RegisterRequestDto::getTipoUso, UsuarioEntity::setTipoUsuario);
+            mapper.skip(Usuario::setId);
+            mapper.map(RegisterRequestDto::getTipoUso, Usuario::setTipoUsuario);
         });
 
-        TypeMap<DeviceCreateDto, VirtualDeviceEntity> deviceCreateMap =
-                modelMapper.createTypeMap(DeviceCreateDto.class, VirtualDeviceEntity.class);
+        TypeMap<DeviceCreateDto, DispositivoVirtual> deviceCreateMap =
+                modelMapper.createTypeMap(DeviceCreateDto.class, DispositivoVirtual.class);
         deviceCreateMap.addMappings(mapper -> {
-            mapper.skip(VirtualDeviceEntity::setId);
-            mapper.map(DeviceCreateDto::getTipoDispositivo, VirtualDeviceEntity::setTipo);
-            mapper.map(DeviceCreateDto::getPotenciaEstimadaWatts, VirtualDeviceEntity::setPotenciaWatts);
+            mapper.skip(DispositivoVirtual::setId);
+            mapper.map(DeviceCreateDto::getTipoDispositivo, DispositivoVirtual::setTipo);
+            mapper.map(DeviceCreateDto::getPotenciaEstimadaWatts, DispositivoVirtual::setPotenciaWatts);
         });
 
-        Converter<Set<RolEntity>, List<String>> roleNamesConverter = context -> {
+        Converter<Set<Rol>, List<String>> roleNamesConverter = context -> {
             if (context.getSource() == null) {
                 return List.of();
             }
 
             return context.getSource()
                     .stream()
-                    .map(RolEntity::getNombre)
+                    .map(Rol::getNombre)
                     .sorted(Comparator.naturalOrder())
                     .toList();
         };
 
-        TypeMap<UsuarioEntity, UsuarioResponseDto> userResponseMap =
-                modelMapper.createTypeMap(UsuarioEntity.class, UsuarioResponseDto.class);
+        TypeMap<Usuario, UsuarioResponseDto> userResponseMap =
+                modelMapper.createTypeMap(Usuario.class, UsuarioResponseDto.class);
         userResponseMap.addMappings(mapper -> mapper
                 .using(roleNamesConverter)
-                .map(UsuarioEntity::getRoles, UsuarioResponseDto::setRoles));
+                .map(Usuario::getRoles, UsuarioResponseDto::setRoles));
 
-        TypeMap<VirtualDeviceEntity, DeviceResponseDto> deviceResponseMap =
-                modelMapper.createTypeMap(VirtualDeviceEntity.class, DeviceResponseDto.class);
+        TypeMap<DispositivoVirtual, DeviceResponseDto> deviceResponseMap =
+                modelMapper.createTypeMap(DispositivoVirtual.class, DeviceResponseDto.class);
         deviceResponseMap.addMappings(mapper -> mapper
                 .map(source -> source.getHabitacion().getId(), DeviceResponseDto::setHabitacionId));
 
-        TypeMap<NotificationSettingsDto, UsuarioEntity> notificationSettingsMap =
-                modelMapper.createTypeMap(NotificationSettingsDto.class, UsuarioEntity.class);
+        TypeMap<NotificationSettingsDto, Usuario> notificationSettingsMap =
+                modelMapper.createTypeMap(NotificationSettingsDto.class, Usuario.class);
         notificationSettingsMap.addMappings(mapper -> {
-            mapper.map(NotificationSettingsDto::getConsumoExcesivo, UsuarioEntity::setNotificarConsumoExcesivo);
-            mapper.map(NotificationSettingsDto::getUsoProlongado, UsuarioEntity::setNotificarUsoProlongado);
-            mapper.map(NotificationSettingsDto::getReporteSemanal, UsuarioEntity::setNotificarReporteSemanal);
+            mapper.map(NotificationSettingsDto::getConsumoExcesivo, Usuario::setNotificarConsumoExcesivo);
+            mapper.map(NotificationSettingsDto::getUsoProlongado, Usuario::setNotificarUsoProlongado);
+            mapper.map(NotificationSettingsDto::getReporteSemanal, Usuario::setNotificarReporteSemanal);
         });
 
         return modelMapper;

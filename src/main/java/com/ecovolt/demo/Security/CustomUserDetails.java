@@ -1,7 +1,7 @@
-package com.ecovolt.demo.Security;
+package com.ecovolt.demo.security;
 
-import com.ecovolt.demo.Entities.RolEntity;
-import com.ecovolt.demo.Entities.UsuarioEntity;
+import com.ecovolt.demo.entities.Rol;
+import com.ecovolt.demo.entities.Usuario;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -10,9 +10,9 @@ import java.util.Collection;
 
 public class CustomUserDetails implements UserDetails {
 
-    private final UsuarioEntity usuario;
+    private final Usuario usuario;
 
-    public CustomUserDetails(UsuarioEntity usuario) {
+    public CustomUserDetails(Usuario usuario) {
         this.usuario = usuario;
     }
 
@@ -20,7 +20,7 @@ public class CustomUserDetails implements UserDetails {
         return usuario.getId();
     }
 
-    public UsuarioEntity getUsuario() {
+    public Usuario getUsuario() {
         return usuario;
     }
 
@@ -28,7 +28,7 @@ public class CustomUserDetails implements UserDetails {
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return usuario.getRoles()
                 .stream()
-                .map(RolEntity::getNombre)
+                .map(Rol::getNombre)
                 .map(role -> role.startsWith("ROLE_") ? role : "ROLE_" + role)
                 .map(SimpleGrantedAuthority::new)
                 .toList();
