@@ -26,18 +26,18 @@ public class RoutineRequestDto {
 
     @NotBlank(message = "El nombre de la rutina es obligatorio")
     @Size(max = 100, message = "El nombre de la rutina no debe superar 100 caracteres")
-    private String name;
+    private String nombre;
 
     @NotNull(message = "La hora de ejecucion es obligatoria")
     @JsonFormat(pattern = "HH:mm")
     @JsonProperty("execution_time")
-    private LocalTime executionTime;
+    private LocalTime tiempoEjecucion;
 
     @NotEmpty(message = "Debe indicar al menos un dia de ejecucion")
     @JsonProperty("days_of_week")
-    private Set<DayOfWeek> daysOfWeek;
+    private Set<DayOfWeek> diasSemana;
 
     @Valid
     @NotEmpty(message = "La rutina debe incluir al menos una accion")
-    private Set<RoutineDeviceActionRequestDto> actions;
+    private Set<RoutineDeviceActionRequestDto> acciones;
 }

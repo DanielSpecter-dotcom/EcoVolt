@@ -1,4 +1,4 @@
-package com.ecovolt.demo.enums;
+package com.ecovolt.demo.Enums;
 
 public enum TipoUsuario {
     PERSONAL,

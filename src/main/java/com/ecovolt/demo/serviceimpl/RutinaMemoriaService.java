@@ -25,10 +25,10 @@ public class RutinaMemoriaService implements RoutineService {
         RoutineResponseDto response = RoutineResponseDto.builder()
                 .id(sequence.getAndIncrement())
                 .homeId(request.getHomeId())
-                .name(request.getName())
-                .executionTime(request.getExecutionTime())
+                .name(request.getNombre())
+                .executionTime(request.getTiempoEjecucion())
                 .daysOfWeek(new LinkedHashSet<>(request.getDaysOfWeek()))
-                .actions(request.getActions().stream()
+                .actions(request.getAcciones().stream()
                         .map(action -> RoutineDeviceActionResponseDto.builder()
                                 .deviceId(action.getDeviceId())
                                 .turnOn(action.getTurnOn())
@@ -64,22 +64,22 @@ public class RutinaMemoriaService implements RoutineService {
         if (request.getName() != null) {
             routine.setName(request.getName());
         }
-        if (request.getExecutionTime() != null) {
-            routine.setExecutionTime(request.getExecutionTime());
+        if (request.getTiempoEjecucion() != null) {
+            routine.setExecutionTime(request.getTiempoEjecucion());
         }
-        if (request.getDaysOfWeek() != null) {
-            routine.setDaysOfWeek(new LinkedHashSet<>(request.getDaysOfWeek()));
+        if (request.getDiasSemana() != null) {
+            routine.setDaysOfWeek(new LinkedHashSet<>(request.getDiasSemana()));
         }
-        if (request.getActions() != null) {
-            routine.setActions(request.getActions().stream()
+        if (request.getAcciones() != null) {
+            routine.setActions(request.getAcciones().stream()
                     .map(action -> RoutineDeviceActionResponseDto.builder()
                             .deviceId(action.getDeviceId())
                             .turnOn(action.getTurnOn())
                             .build())
                     .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new)));
         }
-        if (request.getEnabled() != null) {
-            routine.setEnabled(request.getEnabled());
+        if (request.getHabilitar() != null) {
+            routine.setEnabled(request.getHabilitar());
         }
 
         routines.put(routineId, routine);

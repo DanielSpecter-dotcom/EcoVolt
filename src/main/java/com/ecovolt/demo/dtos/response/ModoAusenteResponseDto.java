@@ -12,14 +12,14 @@ import lombok.Setter;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class AwayModeResponseDto {
+public class ModoAusenteResponseDto {
 
     @JsonProperty("home_id")
     private Long homeId;
 
     @JsonProperty("away_mode_enabled")
-    private Boolean awayModeEnabled;
+    private Boolean modoAusente;
 
     @JsonProperty("paused_routines")
-    private Integer pausedRoutines;
+    private Integer rutinasPausadas;
 }

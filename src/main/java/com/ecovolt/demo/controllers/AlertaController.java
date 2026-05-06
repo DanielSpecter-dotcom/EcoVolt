@@ -6,7 +6,7 @@ import com.ecovolt.demo.dtos.request.AlertLimitRequestDto;
 import com.ecovolt.demo.dtos.response.AlertResponseDto;
 import com.ecovolt.demo.dtos.response.ApiResponse;
 import com.ecovolt.demo.dtos.response.LimitResponseDto;
-import com.ecovolt.demo.security.CustomUserDetails;
+import com.ecovolt.demo.Security.CustomUserDetails;
 import com.ecovolt.demo.serviceimpl.AlertaService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -31,10 +31,10 @@ public class AlertaController {
     private AlertaService alertaService;
 
     @PostMapping("/limits")
-    public ResponseEntity<ApiResponse<LimitResponseDto>> createLimit(
+    public ResponseEntity<ApiResponse<LimitResponseDto>> crearLimite(
             @Valid @RequestBody AlertLimitRequestDto request,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-        LimitResponseDto data = alertaService.createLimit(request, userDetails.getId());
+        LimitResponseDto data = alertaService.crearLimite(request, userDetails.getId());
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new ApiResponse<>(true, "Limite de consumo configurado exitosamente", data));
     }

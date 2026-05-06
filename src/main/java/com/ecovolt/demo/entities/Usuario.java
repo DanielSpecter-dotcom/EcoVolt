@@ -1,6 +1,6 @@
 package com.ecovolt.demo.entities;
 
-import com.ecovolt.demo.enums.TipoUsuario;
+import com.ecovolt.demo.Enums.TipoUsuario;
 import jakarta.persistence.*;
 import lombok.*;
 

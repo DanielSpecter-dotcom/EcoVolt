@@ -21,16 +21,16 @@ public class RoutineUpdateRequestDto {
 
     @JsonFormat(pattern = "HH:mm")
     @JsonProperty("execution_time")
-    private LocalTime executionTime;
+    private LocalTime tiempoEjecucion;
 
     @JsonProperty("days_of_week")
-    private Set<DayOfWeek> daysOfWeek;
+    private Set<DayOfWeek> diasSemana;
 
     @Valid
-    private Set<RoutineDeviceActionRequestDto> actions;
+    private Set<RoutineDeviceActionRequestDto> acciones;
 
     @JsonProperty("enabled")
-    private Boolean enabled;
+    private Boolean habilitar;
 
     @Positive(message = "La casa debe ser valida")
     @JsonProperty("home_id")

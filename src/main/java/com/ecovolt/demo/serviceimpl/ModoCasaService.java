@@ -2,8 +2,8 @@ package com.ecovolt.demo.serviceimpl;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
-import com.ecovolt.demo.dtos.request.AwayModeRequestDto;
-import com.ecovolt.demo.dtos.response.AwayModeResponseDto;
+import com.ecovolt.demo.dtos.request.ModoAusenteRequestDto;
+import com.ecovolt.demo.dtos.response.ModoAusenteResponseDto;
 import com.ecovolt.demo.services.HomeModeService;
 import com.ecovolt.demo.services.RoutineService;
 import org.springframework.stereotype.Service;
@@ -15,12 +15,12 @@ public class ModoCasaService implements HomeModeService {
     private RoutineService rutinaService;
 
     @Override
-    public AwayModeResponseDto updateAwayMode(Long homeId, AwayModeRequestDto request) {
-        int pausedRoutines = rutinaService.applyAwayMode(homeId, request.getAwayModeEnabled());
+    public ModoAusenteResponseDto updateAwayMode(Long homeId, ModoAusenteRequestDto request) {
+        int pausedRoutines = rutinaService.applyAwayMode(homeId, request.getModoAusente());
 
-        return AwayModeResponseDto.builder()
+        return ModoAusenteResponseDto.builder()
                 .homeId(homeId)
-                .awayModeEnabled(request.getAwayModeEnabled())
+                .awayModeEnabled(request.getModoAusente())
                 .pausedRoutines(pausedRoutines)
                 .build();
     }

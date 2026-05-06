@@ -16,6 +16,6 @@ public class RoutineDeviceActionRequestDto {
     private Long deviceId;
 
     @NotNull(message = "La accion de encendido/apagado es obligatoria")
-    @JsonProperty("turn_on")
-    private Boolean turnOn;
+    @JsonProperty("encendido")
+    private Boolean encendido;
 }

@@ -31,7 +31,7 @@ public class AlertaService {
     private AlertaRepositorio alertaRepositorio;
 
     @Transactional
-    public LimitResponseDto createLimit(AlertLimitRequestDto request, Long userId) {
+    public LimitResponseDto crearLimite(AlertLimitRequestDto request, Long userId) {
         return saveLimit(request.getDeviceId(), request.getLimitKwh(), userId);
     }
 

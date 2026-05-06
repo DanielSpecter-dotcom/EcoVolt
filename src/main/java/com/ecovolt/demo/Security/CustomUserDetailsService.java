@@ -1,4 +1,4 @@
-package com.ecovolt.demo.security;
+package com.ecovolt.demo.Security;
 
 import org.springframework.beans.factory.annotation.Autowired;
 

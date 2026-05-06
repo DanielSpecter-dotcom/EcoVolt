@@ -14,11 +14,11 @@ public class DeviceUpdateRequestDto {
 
     @NotBlank(message = "El nombre del dispositivo es obligatorio")
     @Size(max = 80, message = "El nombre del dispositivo no debe superar 80 caracteres")
-    private String name;
+    private String nombre;
 
     @NotBlank(message = "El tipo de dispositivo es obligatorio")
     @Size(max = 80, message = "El tipo de dispositivo no debe superar 80 caracteres")
-    private String type;
+    private String tipo;
 
     @NotNull(message = "La potencia es obligatoria")
     @Positive(message = "La potencia debe ser mayor que cero")

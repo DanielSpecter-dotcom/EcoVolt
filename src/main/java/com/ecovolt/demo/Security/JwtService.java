@@ -1,4 +1,4 @@
-package com.ecovolt.demo.security;
+package com.ecovolt.demo.Security;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -19,6 +19,7 @@ public class JwtService {
 
     private static final String TOKEN_TYPE_CLAIM = "token_type";
     private static final String EMAIL_VERIFICATION_TOKEN_TYPE = "email_verification";
+    private static final String ACCESS_TOKEN_TYPE = "access";
 
     private final SecretKey secretKey;
     private final long expirationMillis;
@@ -33,6 +34,7 @@ public class JwtService {
     public String generateToken(UserDetails userDetails) {
         return Jwts.builder()
                 .claims(Map.of(
+                        TOKEN_TYPE_CLAIM, ACCESS_TOKEN_TYPE,
                         "authorities",
                         userDetails.getAuthorities()
                                 .stream()
@@ -69,8 +71,13 @@ public class JwtService {
     }
 
     public boolean isTokenValid(String token, UserDetails userDetails) {
-        String username = extractUsername(token);
-        return username.equals(userDetails.getUsername()) && !isTokenExpired(token);
+        Claims claims = extractAllClaims(token);
+        String username = claims.getSubject();
+        String tokenType = claims.get(TOKEN_TYPE_CLAIM, String.class);
+
+        return username.equals(userDetails.getUsername())
+                && !isTokenExpired(token)
+                && ACCESS_TOKEN_TYPE.equals(tokenType);
     }
 
     public boolean isEmailVerificationTokenValid(String token, String correo) {

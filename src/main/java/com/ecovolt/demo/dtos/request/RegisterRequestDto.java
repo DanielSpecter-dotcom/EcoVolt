@@ -1,6 +1,6 @@
 package com.ecovolt.demo.dtos.request;
 
-import com.ecovolt.demo.enums.TipoUsuario;
+import com.ecovolt.demo.Enums.TipoUsuario;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

@@ -1,4 +1,4 @@
-package com.ecovolt.demo.config;
+package com.ecovolt.demo.Config;
 
 import com.ecovolt.demo.dtos.request.DeviceCreateDto;
 import com.ecovolt.demo.dtos.request.NotificationSettingsDto;
@@ -21,58 +21,55 @@ import java.util.Set;
 
 @Configuration
 public class ModelMapperConfig {
+
     @Bean
     public ModelMapper modelMapper() {
         ModelMapper modelMapper = new ModelMapper();
-
         modelMapper.getConfiguration().setMatchingStrategy(MatchingStrategies.STRICT);
 
-        TypeMap<RegisterRequestDto, Usuario> registerRequestMap =
-                modelMapper.createTypeMap(RegisterRequestDto.class, Usuario.class);
-        registerRequestMap.addMappings(mapper -> {
-            mapper.skip(Usuario::setId);
-            mapper.map(RegisterRequestDto::getTipoUso, Usuario::setTipoUsuario);
-        });
-
-        TypeMap<DeviceCreateDto, DispositivoVirtual> deviceCreateMap =
-                modelMapper.createTypeMap(DeviceCreateDto.class, DispositivoVirtual.class);
-        deviceCreateMap.addMappings(mapper -> {
-            mapper.skip(DispositivoVirtual::setId);
-            mapper.map(DeviceCreateDto::getTipoDispositivo, DispositivoVirtual::setTipo);
-            mapper.map(DeviceCreateDto::getPotenciaEstimadaWatts, DispositivoVirtual::setPotenciaWatts);
-        });
-
-        Converter<Set<Rol>, List<String>> roleNamesConverter = context -> {
-            if (context.getSource() == null) {
-                return List.of();
-            }
-
-            return context.getSource()
-                    .stream()
-                    .map(Rol::getNombre)
-                    .sorted(Comparator.naturalOrder())
-                    .toList();
-        };
-
-        TypeMap<Usuario, UsuarioResponseDto> userResponseMap =
-                modelMapper.createTypeMap(Usuario.class, UsuarioResponseDto.class);
-        userResponseMap.addMappings(mapper -> mapper
-                .using(roleNamesConverter)
-                .map(Usuario::getRoles, UsuarioResponseDto::setRoles));
-
-        TypeMap<DispositivoVirtual, DeviceResponseDto> deviceResponseMap =
-                modelMapper.createTypeMap(DispositivoVirtual.class, DeviceResponseDto.class);
-        deviceResponseMap.addMappings(mapper -> mapper
-                .map(source -> source.getHabitacion().getId(), DeviceResponseDto::setHabitacionId));
-
-        TypeMap<NotificationSettingsDto, Usuario> notificationSettingsMap =
-                modelMapper.createTypeMap(NotificationSettingsDto.class, Usuario.class);
-        notificationSettingsMap.addMappings(mapper -> {
-            mapper.map(NotificationSettingsDto::getConsumoExcesivo, Usuario::setNotificarConsumoExcesivo);
-            mapper.map(NotificationSettingsDto::getUsoProlongado, Usuario::setNotificarUsoProlongado);
-            mapper.map(NotificationSettingsDto::getReporteSemanal, Usuario::setNotificarReporteSemanal);
-        });
+        // Agrupamos los mapeos por entidad para que sea legible
+        configureUserMappings(modelMapper);
+        configureDeviceMappings(modelMapper);
 
         return modelMapper;
+    }
+
+    private void configureUserMappings(ModelMapper mm) {
+        // Registro
+        mm.createTypeMap(RegisterRequestDto.class, Usuario.class)
+                .addMappings(m -> {
+                    m.skip(Usuario::setId);
+                    m.map(RegisterRequestDto::getTipoUso, Usuario::setTipoUsuario);
+                });
+
+        // Configuración de Notificaciones
+        mm.createTypeMap(NotificationSettingsDto.class, Usuario.class)
+                .addMappings(m -> {
+                    m.map(NotificationSettingsDto::getConsumoExcesivo, Usuario::setNotificarConsumoExcesivo);
+                    m.map(NotificationSettingsDto::getUsoProlongado, Usuario::setNotificarUsoProlongado);
+                    m.map(NotificationSettingsDto::getReporteSemanal, Usuario::setNotificarReporteSemanal);
+                });
+
+        // Respuesta de Usuario (con Converter inline para ahorrar espacio)
+        mm.createTypeMap(Usuario.class, UsuarioResponseDto.class)
+                .addMappings(m -> m.using(ctx ->
+                                ctx.getSource() == null ? List.of() :
+                                        ((Set<Rol>) ctx.getSource()).stream()
+                                                .map(Rol::getNombre).sorted().toList())
+                        .map(Usuario::getRoles, UsuarioResponseDto::setRoles));
+    }
+
+    private void configureDeviceMappings(ModelMapper mm) {
+        // Creación de Dispositivo
+        mm.createTypeMap(DeviceCreateDto.class, DispositivoVirtual.class)
+                .addMappings(m -> {
+                    m.skip(DispositivoVirtual::setId);
+                    m.map(DeviceCreateDto::getTipoDispositivo, DispositivoVirtual::setTipo);
+                    m.map(DeviceCreateDto::getPotenciaEstimadaWatts, DispositivoVirtual::setPotenciaWatts);
+                });
+
+        // Respuesta de Dispositivo (Mapeo de ID de habitación)
+        mm.createTypeMap(DispositivoVirtual.class, DeviceResponseDto.class)
+                .addMapping(src -> src.getHabitacion().getId(), DeviceResponseDto::setHabitacionId);
     }
 }

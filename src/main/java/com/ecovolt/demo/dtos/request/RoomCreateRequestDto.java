@@ -19,5 +19,5 @@ public class RoomCreateRequestDto {
 
     @NotBlank(message = "El nombre del ambiente es obligatorio")
     @Size(max = 80, message = "El nombre del ambiente no debe superar 80 caracteres")
-    private String name;
+    private String nombre;
 }

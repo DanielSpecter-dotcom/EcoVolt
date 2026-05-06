@@ -87,7 +87,7 @@ public class DispositivoService {
                         .build()));
 
         Habitacion habitacion = habitacionRepositorio.save(Habitacion.builder()
-                .nombre(request.getName().trim())
+                .nombre(request.getNombre().trim())
                 .casa(casa)
                 .build());
 
@@ -109,8 +109,8 @@ public class DispositivoService {
         Habitacion habitacion = findRoomInSameHome(dispositivo, request.getRoomId());
         boolean powerChanged = Double.compare(dispositivo.getPotenciaWatts(), request.getPower()) != 0;
 
-        dispositivo.setNombre(request.getName().trim());
-        dispositivo.setTipo(request.getType().trim());
+        dispositivo.setNombre(request.getNombre().trim());
+        dispositivo.setTipo(request.getTipo().trim());
         dispositivo.setPotenciaWatts(request.getPower());
         dispositivo.setHabitacion(habitacion);
 

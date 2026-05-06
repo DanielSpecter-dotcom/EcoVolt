@@ -55,11 +55,11 @@ public class ConsumoService implements IConsumoService {
                 .sum();
 
         return RoomConsumptionResponseDto.builder()
-                .habitacionId(habitacion.getId())
-                .habitacionName(habitacion.getNombre())
+                .roomId(habitacion.getId())
+                .roomName(habitacion.getNombre())
                 .totalKwh(round(totalKwh))
                 .totalDurationMinutes(totalDuration)
-                .dispositivos(dispositivos)
+                .devices(dispositivos)
                 .build();
     }
 
@@ -73,7 +73,7 @@ public class ConsumoService implements IConsumoService {
 
         return ConsumptionCompareResponseDto.builder()
                 .totalKwh(round(totalKwh))
-                .dispositivos(dispositivos)
+                .devices(dispositivos)
                 .build();
     }
 
@@ -99,7 +99,7 @@ public class ConsumoService implements IConsumoService {
         double monthlyKwh = sumBetween(historial, monthStart, today);
 
         return ConsumptionResponseDto.builder()
-                .dispositivoId(device.getId())
+                .deviceId(device.getId())
                 .deviceName(device.getNombre())
                 .dailyKwh(round(dailyKwh))
                 .weeklyKwh(round(weeklyKwh))
@@ -137,10 +137,10 @@ public class ConsumoService implements IConsumoService {
         double percentage = totalKwh == 0 ? 0 : (deviceTotal / totalKwh) * 100;
 
         return ConsumptionCompareItemDto.builder()
-                .dispositivoId(device.getId())
+                .deviceId(device.getId())
                 .deviceName(device.getNombre())
-                .habitacionId(device.getHabitacion().getId())
-                .habitacionName(device.getHabitacion().getNombre())
+                .roomId(device.getHabitacion().getId())
+                .roomName(device.getHabitacion().getNombre())
                 .totalKwh(round(deviceTotal))
                 .percentage(round(percentage))
                 .build();

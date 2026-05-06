@@ -1,5 +1,7 @@
-package com.ecovolt.demo.security;
+package com.ecovolt.demo.Security;
 
+import com.ecovolt.demo.Security.CustomUserDetailsService;
+import com.ecovolt.demo.Security.JwtService;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import jakarta.servlet.FilterChain;

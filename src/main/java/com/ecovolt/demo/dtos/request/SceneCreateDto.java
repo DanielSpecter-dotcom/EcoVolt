@@ -16,10 +16,10 @@ public class SceneCreateDto {
 
     @NotBlank(message = "El nombre de la escena es obligatorio")
     @Size(max = 100, message = "El nombre de la escena no debe superar 100 caracteres")
-    private String name;
+    private String nombre;
 
     @Valid
     @NotEmpty(message = "La escena debe incluir al menos un dispositivo")
     @JsonProperty("devices")
-    private List<DeviceStateRequestDto> devices;
+    private List<DeviceStateRequestDto> dispostivos;
 }

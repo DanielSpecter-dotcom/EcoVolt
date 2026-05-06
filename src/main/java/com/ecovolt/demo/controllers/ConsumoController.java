@@ -6,7 +6,7 @@ import com.ecovolt.demo.dtos.response.ApiResponse;
 import com.ecovolt.demo.dtos.response.ConsumptionCompareResponseDto;
 import com.ecovolt.demo.dtos.response.ConsumptionResponseDto;
 import com.ecovolt.demo.dtos.response.RoomConsumptionResponseDto;
-import com.ecovolt.demo.security.CustomUserDetails;
+import com.ecovolt.demo.Security.CustomUserDetails;
 import com.ecovolt.demo.services.IConsumoService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;

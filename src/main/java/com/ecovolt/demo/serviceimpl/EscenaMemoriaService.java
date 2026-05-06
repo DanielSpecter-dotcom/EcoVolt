@@ -26,8 +26,8 @@ public class EscenaMemoriaService implements SceneService {
         Long sceneId = sequence.getAndIncrement();
         SceneResponseDto response = SceneResponseDto.builder()
                 .id(sceneId)
-                .name(request.getName())
-                .devices(mapDeviceStates(request.getDevices()))
+                .name(request.getNombre())
+                .devices(mapDeviceStates(request.getDispostivos()))
                 .build();
 
         scenes.put(sceneId, response);

@@ -7,9 +7,9 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class AwayModeRequestDto {
+public class ModoAusenteRequestDto {
 
     @NotNull(message = "Debe indicar si el modo ausente esta activo")
     @JsonProperty("away_mode_enabled")
-    private Boolean awayModeEnabled;
+    private Boolean modoAusente;
 }

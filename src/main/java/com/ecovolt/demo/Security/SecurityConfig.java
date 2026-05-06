@@ -1,4 +1,4 @@
-package com.ecovolt.demo.security;
+package com.ecovolt.demo.Security;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -53,7 +53,8 @@ public class SecurityConfig {
 
     @Bean
     public AuthenticationProvider authenticationProvider() {
-        DaoAuthenticationProvider provider = new DaoAuthenticationProvider(userDetailsService);
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+        provider.setUserDetailsService(userDetailsService);
         provider.setPasswordEncoder(passwordEncoder());
         return provider;
     }
