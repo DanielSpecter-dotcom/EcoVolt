@@ -1,7 +1,7 @@
 package com.ecovolt.demo.dtos.response;
 
 
-import com.ecovolt.demo.enums.TipoUsuario;
+import com.ecovolt.demo.Enums.TipoUsuario;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;

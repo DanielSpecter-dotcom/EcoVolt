@@ -27,11 +27,11 @@ public class RutinaMemoriaService implements RoutineService {
                 .homeId(request.getHomeId())
                 .name(request.getNombre())
                 .executionTime(request.getTiempoEjecucion())
-                .daysOfWeek(new LinkedHashSet<>(request.getDaysOfWeek()))
+                .daysOfWeek(new LinkedHashSet<>(request.getDiasSemana()))
                 .actions(request.getAcciones().stream()
                         .map(action -> RoutineDeviceActionResponseDto.builder()
                                 .deviceId(action.getDeviceId())
-                                .turnOn(action.getTurnOn())
+                                .turnOn(action.getEncendido())
                                 .build())
                         .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new)))
                 .enabled(true)
@@ -74,7 +74,7 @@ public class RutinaMemoriaService implements RoutineService {
             routine.setActions(request.getAcciones().stream()
                     .map(action -> RoutineDeviceActionResponseDto.builder()
                             .deviceId(action.getDeviceId())
-                            .turnOn(action.getTurnOn())
+                            .turnOn(action.getEncendido())
                             .build())
                     .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new)));
         }

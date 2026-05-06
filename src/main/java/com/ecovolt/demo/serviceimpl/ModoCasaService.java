@@ -20,8 +20,8 @@ public class ModoCasaService implements HomeModeService {
 
         return ModoAusenteResponseDto.builder()
                 .homeId(homeId)
-                .awayModeEnabled(request.getModoAusente())
-                .pausedRoutines(pausedRoutines)
+                .modoAusente(request.getModoAusente())
+                .rutinasPausadas(pausedRoutines)
                 .build();
     }
 }
