@@ -4,7 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import com.ecovolt.demo.dtos.response.ApiResponse;
 import com.ecovolt.demo.dtos.response.ReportResponseDto;
-import com.ecovolt.demo.Security.CustomUserDetails;
+import com.ecovolt.demo.security.CustomUserDetails;
 import com.ecovolt.demo.serviceimpl.ReporteService;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;

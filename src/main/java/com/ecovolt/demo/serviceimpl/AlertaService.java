@@ -15,7 +15,9 @@ import com.ecovolt.demo.repositories.DispositivoVirtualRepositorio;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -31,79 +33,109 @@ public class AlertaService {
     private AlertaRepositorio alertaRepositorio;
 
     @Transactional
-    public LimitResponseDto crearLimite(AlertLimitRequestDto request, Long userId) {
-        return saveLimit(request.getDeviceId(), request.getLimitKwh(), userId);
+    public LimitResponseDto crearLimite(AlertLimitRequestDto solicitud, Long usuarioId) {
+        return guardarLimite(solicitud.getDeviceId(), solicitud.getLimitKwh(), usuarioId);
     }
 
     @Transactional
-    public LimitResponseDto updateLimit(Long deviceId, AlertLimitRequestDto request, Long userId) {
-        return saveLimit(deviceId, request.getLimitKwh(), userId);
+    public LimitResponseDto actualizarLimite(Long dispositivoId, AlertLimitRequestDto solicitud, Long usuarioId) {
+        return guardarLimite(dispositivoId, solicitud.getLimitKwh(), usuarioId);
     }
 
     @Transactional(readOnly = true)
-    public List<AlertResponseDto> getHistory(Long userId) {
-        return alertaRepositorio.findByDispositivoHabitacionCasaUsuarioIdOrderByFechaCreacionDesc(userId)
+    public List<AlertResponseDto> obtenerHistorial(Long usuarioId) {
+        return alertaRepositorio.findByDispositivoHabitacionCasaUsuarioIdOrderByFechaCreacionDesc(usuarioId)
                 .stream()
-                .map(this::toResponse)
+                .map(this::convertirARespuesta)
                 .toList();
     }
 
-    @Transactional
-    public AlertResponseDto markAsRead(Long alertId, Long userId) {
-        Alerta alert = alertaRepositorio.findByIdAndDispositivoHabitacionCasaUsuarioId(alertId, userId)
-                .orElseThrow(() -> new ResourceNotFoundException("Alerta no encontrada"));
+    @Transactional(readOnly = true)
+    public List<AlertResponseDto> filtrarAlertas(Long usuarioId, Long dispositivoId, LocalDate desde, LocalDate hasta) {
+        List<Alerta> alertas = alertaRepositorio.findByDispositivoHabitacionCasaUsuarioIdOrderByFechaCreacionDesc(usuarioId);
+        List<AlertResponseDto> respuesta = new ArrayList<>();
 
-        alert.setLeido(true);
-        return toResponse(alertaRepositorio.save(alert));
+        for (Alerta alerta : alertas) {
+            boolean valido = true;
+
+            if (dispositivoId != null) {
+                if (alerta.getDispositivo() == null || !alerta.getDispositivo().getId().equals(dispositivoId)) {
+                    valido = false;
+                }
+            }
+
+            if (desde != null && alerta.getFechaCreacion().toLocalDate().isBefore(desde)) {
+                valido = false;
+            }
+
+            if (hasta != null && alerta.getFechaCreacion().toLocalDate().isAfter(hasta)) {
+                valido = false;
+            }
+
+            if (valido) {
+                respuesta.add(convertirARespuesta(alerta));
+            }
+        }
+
+        return respuesta;
     }
 
-    private LimitResponseDto saveLimit(Long deviceId, Double limitKwh, Long userId) {
-        DispositivoVirtual device = dispositivoVirtualRepositorio.findByIdAndHabitacionCasaUsuarioId(deviceId, userId)
+    @Transactional
+    public AlertResponseDto marcarComoLeida(Long alertaId, Long usuarioId) {
+        Alerta alerta = alertaRepositorio.findByIdAndDispositivoHabitacionCasaUsuarioId(alertaId, usuarioId)
+                .orElseThrow(() -> new ResourceNotFoundException("Alerta no encontrada"));
+
+        alerta.setLeido(true);
+        return convertirARespuesta(alertaRepositorio.save(alerta));
+    }
+
+    private LimitResponseDto guardarLimite(Long dispositivoId, Double limiteKwh, Long usuarioId) {
+        DispositivoVirtual dispositivo = dispositivoVirtualRepositorio.findByIdAndHabitacionCasaUsuarioId(dispositivoId, usuarioId)
                 .orElseThrow(() -> new ResourceNotFoundException("Dispositivo no encontrado"));
 
-        device.setLimiteKwh(limitKwh);
-        device = dispositivoVirtualRepositorio.save(device);
-        createAlertIfLimitWasExceeded(device, userId);
+        dispositivo.setLimiteKwh(limiteKwh);
+        dispositivo = dispositivoVirtualRepositorio.save(dispositivo);
+        crearAlertaSiSuperaLimite(dispositivo, usuarioId);
 
         return LimitResponseDto.builder()
-                .deviceId(device.getId())
-                .deviceName(device.getNombre())
-                .limitKwh(device.getLimiteKwh())
+                .deviceId(dispositivo.getId())
+                .deviceName(dispositivo.getNombre())
+                .limitKwh(dispositivo.getLimiteKwh())
                 .build();
     }
 
-    private void createAlertIfLimitWasExceeded(DispositivoVirtual device, Long userId) {
-        double consumedKwh = historicoRepositorio.findByDispositivoHabitacionCasaUsuarioIdOrderByFechaRegistroDesc(userId)
+    private void crearAlertaSiSuperaLimite(DispositivoVirtual dispositivo, Long usuarioId) {
+        double consumoKwh = historicoRepositorio.findByDispositivoHabitacionCasaUsuarioIdOrderByFechaRegistroDesc(usuarioId)
                 .stream()
-                .filter(history -> history.getDispositivo().getId().equals(device.getId()))
+                .filter(history -> history.getDispositivo().getId().equals(dispositivo.getId()))
                 .map(Historico::getKwhConsumidos)
                 .mapToDouble(Double::doubleValue)
                 .sum();
 
-        if (device.getLimiteKwh() == null || consumedKwh <= device.getLimiteKwh()) {
+        if (dispositivo.getLimiteKwh() == null || consumoKwh <= dispositivo.getLimiteKwh()) {
             return;
         }
 
         alertaRepositorio.save(Alerta.builder()
                 .tipo(EXCESS_CONSUMPTION)
-                .mensaje("El dispositivo " + device.getNombre() + " supero el limite de consumo configurado")
+                .mensaje("El dispositivo " + dispositivo.getNombre() + " supero el limite de consumo configurado")
                 .fechaCreacion(LocalDateTime.now())
                 .leido(false)
-                .dispositivo(device)
+                .dispositivo(dispositivo)
                 .build());
     }
 
-    private AlertResponseDto toResponse(Alerta alert) {
-        DispositivoVirtual device = alert.getDispositivo();
+    private AlertResponseDto convertirARespuesta(Alerta alerta) {
+        DispositivoVirtual dispositivo = alerta.getDispositivo();
 
         return AlertResponseDto.builder()
-                .id(alert.getId())
-                .tipo(alert.getTipo())
-                .mensaje(alert.getMensaje())
-                .fechaCreacion(alert.getFechaCreacion())
-                .leido(alert.isLeido())
-                .deviceId(device == null ? null : device.getId())
-                .deviceName(device == null ? null : device.getNombre())
+                .id(alerta.getId())
+                .tipo(alerta.getTipo())
+                .mensaje(alerta.getMensaje())
+                .fechaCreacion(alerta.getFechaCreacion())
+                .leido(alerta.isLeido())
+                .deviceId(dispositivo == null ? null : dispositivo.getId())
+                .deviceName(dispositivo == null ? null : dispositivo.getNombre())
                 .build();
     }
 }

@@ -53,6 +53,13 @@ public class EscenaMemoriaService implements SceneService {
                 .build();
     }
 
+    @Override
+    public List<SceneResponseDto> findAll() {
+        return scenes.values().stream()
+                .sorted(java.util.Comparator.comparing(SceneResponseDto::getId))
+                .toList();
+    }
+
     private List<DeviceStateResponseDto> mapDeviceStates(List<DeviceStateRequestDto> devices) {
         return devices.stream()
                 .map(device -> DeviceStateResponseDto.builder()

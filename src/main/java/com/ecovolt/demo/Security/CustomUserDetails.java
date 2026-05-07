@@ -1,4 +1,4 @@
-package com.ecovolt.demo.Security;
+package com.ecovolt.demo.security;
 
 import com.ecovolt.demo.entities.Rol;
 import com.ecovolt.demo.entities.Usuario;

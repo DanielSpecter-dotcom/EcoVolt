@@ -6,9 +6,10 @@ import com.ecovolt.demo.dtos.request.AlertLimitRequestDto;
 import com.ecovolt.demo.dtos.response.AlertResponseDto;
 import com.ecovolt.demo.dtos.response.ApiResponse;
 import com.ecovolt.demo.dtos.response.LimitResponseDto;
-import com.ecovolt.demo.Security.CustomUserDetails;
+import com.ecovolt.demo.security.CustomUserDetails;
 import com.ecovolt.demo.serviceimpl.AlertaService;
 import jakarta.validation.Valid;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -19,8 +20,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -32,34 +35,49 @@ public class AlertaController {
 
     @PostMapping("/limits")
     public ResponseEntity<ApiResponse<LimitResponseDto>> crearLimite(
-            @Valid @RequestBody AlertLimitRequestDto request,
+            @Valid @RequestBody AlertLimitRequestDto solicitud,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-        LimitResponseDto data = alertaService.crearLimite(request, userDetails.getId());
+        LimitResponseDto respuesta = alertaService.crearLimite(solicitud, userDetails.getId());
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new ApiResponse<>(true, "Limite de consumo configurado exitosamente", data));
+                .body(new ApiResponse<>(true, "Limite de consumo configurado exitosamente", respuesta));
     }
 
-    @PutMapping("/limits/{deviceId}")
-    public ResponseEntity<ApiResponse<LimitResponseDto>> updateLimit(
-            @PathVariable Long deviceId,
-            @Valid @RequestBody AlertLimitRequestDto request,
+    @PutMapping("/limits/{dispositivoId}")
+    public ResponseEntity<ApiResponse<LimitResponseDto>> actualizarLimite(
+            @PathVariable Long dispositivoId,
+            @Valid @RequestBody AlertLimitRequestDto solicitud,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-        LimitResponseDto data = alertaService.updateLimit(deviceId, request, userDetails.getId());
-        return ResponseEntity.ok(new ApiResponse<>(true, "Limite de consumo actualizado exitosamente", data));
+        LimitResponseDto respuesta = alertaService.actualizarLimite(dispositivoId, solicitud, userDetails.getId());
+        return ResponseEntity.ok(new ApiResponse<>(true, "Limite de consumo actualizado exitosamente", respuesta));
     }
 
     @GetMapping("/history")
-    public ResponseEntity<ApiResponse<List<AlertResponseDto>>> getHistory(
+    public ResponseEntity<ApiResponse<List<AlertResponseDto>>> obtenerHistorial(
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-        List<AlertResponseDto> data = alertaService.getHistory(userDetails.getId());
-        return ResponseEntity.ok(new ApiResponse<>(true, "Historial de alertas obtenido exitosamente", data));
+        List<AlertResponseDto> respuesta = alertaService.obtenerHistorial(userDetails.getId());
+        return ResponseEntity.ok(new ApiResponse<>(true, "Historial de alertas obtenido exitosamente", respuesta));
     }
 
-    @PatchMapping("/{alertId}/read")
-    public ResponseEntity<ApiResponse<AlertResponseDto>> markAsRead(
-            @PathVariable Long alertId,
+    @GetMapping("/filter")
+    public ResponseEntity<ApiResponse<List<AlertResponseDto>>> filtrarAlertas(
+            @RequestParam(name = "device", required = false) Long dispositivoId,
+            @RequestParam(name = "from", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
+            @RequestParam(name = "to", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-        AlertResponseDto data = alertaService.markAsRead(alertId, userDetails.getId());
-        return ResponseEntity.ok(new ApiResponse<>(true, "Alerta marcada como leida", data));
+        List<AlertResponseDto> respuesta = alertaService.filtrarAlertas(
+                userDetails.getId(),
+                dispositivoId,
+                desde,
+                hasta
+        );
+        return ResponseEntity.ok(new ApiResponse<>(true, "Alertas filtradas exitosamente", respuesta));
+    }
+
+    @PatchMapping("/{alertaId}/read")
+    public ResponseEntity<ApiResponse<AlertResponseDto>> marcarComoLeida(
+            @PathVariable Long alertaId,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        AlertResponseDto respuesta = alertaService.marcarComoLeida(alertaId, userDetails.getId());
+        return ResponseEntity.ok(new ApiResponse<>(true, "Alerta marcada como leida", respuesta));
     }
 }

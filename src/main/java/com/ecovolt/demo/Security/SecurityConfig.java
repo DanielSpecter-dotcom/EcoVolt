@@ -1,4 +1,4 @@
-package com.ecovolt.demo.Security;
+package com.ecovolt.demo.security;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -41,7 +41,8 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/v1/consumption/**",
                                 "/api/v1/reports/**",
-                                "/api/v1/alerts/**"
+                                "/api/v1/alerts/**",
+                                "/api/v1/dashboard/**"
                         ).hasAnyRole("PERSONAL", "EMPRESARIAL")
                         .anyRequest().authenticated()
                 )

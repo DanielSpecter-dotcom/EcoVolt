@@ -1,4 +1,4 @@
-package com.ecovolt.demo.Security;
+package com.ecovolt.demo.security;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;

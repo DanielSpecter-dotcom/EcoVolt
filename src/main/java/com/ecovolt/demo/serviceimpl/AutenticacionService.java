@@ -24,7 +24,7 @@ import com.ecovolt.demo.repositories.HistoricoRepositorio;
 import com.ecovolt.demo.repositories.RolRepositorio;
 import com.ecovolt.demo.repositories.UsuarioRepositorio;
 import com.ecovolt.demo.repositories.DispositivoVirtualRepositorio;
-import com.ecovolt.demo.Security.JwtService;
+import com.ecovolt.demo.security.JwtService;
 import com.ecovolt.demo.services.feingservice.ReniecClient;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Value;
