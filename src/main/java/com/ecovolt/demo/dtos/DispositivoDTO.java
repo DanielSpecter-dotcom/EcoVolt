@@ -18,8 +18,11 @@ public class DispositivoDTO {
     private String nombre;
     private String tipo;
 
-    //@JsonProperty("potencia_watts")
-    //private Double potenciaWatts;
+    @JsonProperty("potencia_watts")
+    private Double potenciaWatts;
+
+    @JsonProperty("limite_kwh")
+    private Double limiteKwh;
 
     private String status;
     private String mode;

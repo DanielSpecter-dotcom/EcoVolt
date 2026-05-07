@@ -37,7 +37,7 @@ public class DispositivoController {
 
     @Operation(summary = "Registrar un dispositivo virtual")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Dispositivo creado")
-    @PostMapping
+    @PostMapping({"", "/insertar"})
     public ResponseEntity<RespuestaApi<DispositivoDTO>> create(@Valid @RequestBody CrearDispositivoDto request) {
         DispositivoDTO data = dispositivoService.create(request);
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -46,7 +46,7 @@ public class DispositivoController {
 
     @Operation(summary = "Listar dispositivos", description = "Lista todos los dispositivos no eliminados con su estado actual")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Dispositivos obtenidos")
-    @GetMapping
+    @GetMapping({"", "/listar"})
     public ResponseEntity<RespuestaApi<List<DispositivoDTO>>> findAll() {
         List<DispositivoDTO> data = dispositivoService.findAll();
         return ResponseEntity.ok(new RespuestaApi<>(true, "Dispositivos obtenidos exitosamente", data));
