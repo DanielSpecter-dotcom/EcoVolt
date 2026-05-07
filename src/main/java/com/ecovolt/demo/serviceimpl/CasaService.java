@@ -8,8 +8,8 @@ import com.ecovolt.demo.entities.Usuario;
 import com.ecovolt.demo.exceptions.ResourceNotFoundException;
 import com.ecovolt.demo.repositories.CasaRepositorio;
 import com.ecovolt.demo.repositories.UsuarioRepositorio;
-import com.ecovolt.demo.services.HomeModeService;
 import com.ecovolt.demo.services.RoutineService;
+import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,54 +17,77 @@ import java.util.List;
 
 @Service
 @Transactional
-public class ModoCasaService implements HomeModeService {
+public class CasaService {
 
     private final RoutineService rutinaService;
     private final CasaRepositorio casaRepositorio;
     private final UsuarioRepositorio usuarioRepositorio;
+    private final ModelMapper modelMapper;
 
-    public ModoCasaService(RoutineService rutinaService,
-                           CasaRepositorio casaRepositorio,
-                           UsuarioRepositorio usuarioRepositorio) {
+    public CasaService(RoutineService rutinaService,
+                       CasaRepositorio casaRepositorio,
+                       UsuarioRepositorio usuarioRepositorio,
+                       ModelMapper modelMapper) {
         this.rutinaService = rutinaService;
         this.casaRepositorio = casaRepositorio;
         this.usuarioRepositorio = usuarioRepositorio;
+        this.modelMapper = modelMapper;
     }
 
-    public CasaDTO create(Casa request) {
-        Usuario usuario = usuarioRepositorio.findById(request.getUsuario().getId())
+    public CasaDTO create(CasaDTO request) {
+        Usuario usuario = usuarioRepositorio.findById(request.getUsuarioId())
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
 
-        request.setId(null);
-        request.setUsuario(usuario);
-        return toHomeResponse(casaRepositorio.save(request));
+        Casa casa = modelMapper.map(request, Casa.class);
+        casa.setId(null);
+        casa.setUsuario(usuario);
+        casa = casaRepositorio.save(casa);
+
+        CasaDTO casaDTO = modelMapper.map(casa, CasaDTO.class);
+        casaDTO.setUsuarioId(casa.getUsuario().getId());
+        return casaDTO;
     }
 
     @Transactional(readOnly = true)
     public List<CasaDTO> findAll() {
         return casaRepositorio.findAll()
                 .stream()
-                .map(this::toHomeResponse)
+                .map(casa -> {
+                    CasaDTO casaDTO = modelMapper.map(casa, CasaDTO.class);
+                    casaDTO.setUsuarioId(casa.getUsuario().getId());
+                    return casaDTO;
+                })
                 .toList();
     }
 
     @Transactional(readOnly = true)
     public CasaDTO findById(Long id) {
-        return toHomeResponse(findHome(id));
+        Casa casa = findHome(id);
+        CasaDTO casaDTO = modelMapper.map(casa, CasaDTO.class);
+        casaDTO.setUsuarioId(casa.getUsuario().getId());
+        return casaDTO;
     }
 
-    public CasaDTO update(Long id, Casa request) {
+    public CasaDTO update(Long id, CasaDTO request) {
         Casa casa = findHome(id);
-        casa.setNombre(request.getNombre());
-        return toHomeResponse(casaRepositorio.save(casa));
+        Usuario usuario = casa.getUsuario();
+
+        modelMapper.map(request, casa);
+        casa.setId(id);
+        casa.setUsuario(usuario);
+        casa = casaRepositorio.save(casa);
+
+        CasaDTO casaDTO = modelMapper.map(casa, CasaDTO.class);
+        casaDTO.setUsuarioId(casa.getUsuario().getId());
+        return casaDTO;
     }
 
     public void delete(Long id) {
-        Casa casa = findHome(id);
-        casaRepositorio.delete(casa);
+        if (casaRepositorio.existsById(id)) {
+            casaRepositorio.deleteById(id);
+        }
     }
 
-    @Override
     public ModoAusenteRespuestaDto updateAwayMode(Long homeId, ModoAusenteDto request) {
         findHome(homeId);
         int pausedRoutines = rutinaService.applyAwayMode(homeId, request.getModoAusente());
@@ -79,13 +102,5 @@ public class ModoCasaService implements HomeModeService {
     private Casa findHome(Long id) {
         return casaRepositorio.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Casa no encontrada"));
-    }
-
-    private CasaDTO toHomeResponse(Casa casa) {
-        return CasaDTO.builder()
-                .id(casa.getId())
-                .nombre(casa.getNombre())
-                .usuarioId(casa.getUsuario().getId())
-                .build();
     }
 }

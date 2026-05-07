@@ -6,7 +6,6 @@ import com.ecovolt.demo.dtos.LimiteAlertaSolicitudDto;
 import com.ecovolt.demo.dtos.AlertaDTO;
 import com.ecovolt.demo.dtos.RespuestaApi;
 import com.ecovolt.demo.dtos.LimiteRespuestaDto;
-import com.ecovolt.demo.entities.Alerta;
 import com.ecovolt.demo.security.CustomUserDetails;
 import com.ecovolt.demo.serviceimpl.AlertaService;
 import jakarta.validation.Valid;
@@ -36,7 +35,7 @@ public class AlertaController {
     private AlertaService alertaService;
 
     @PostMapping
-    public ResponseEntity<RespuestaApi<AlertaDTO>> create(@RequestBody Alerta request) {
+    public ResponseEntity<RespuestaApi<AlertaDTO>> create(@RequestBody AlertaDTO request) {
         AlertaDTO respuesta = alertaService.create(request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new RespuestaApi<>(true, "Alerta creada exitosamente", respuesta));
@@ -57,7 +56,7 @@ public class AlertaController {
     @PutMapping("/{id}")
     public ResponseEntity<RespuestaApi<AlertaDTO>> update(
             @PathVariable Long id,
-            @RequestBody Alerta request) {
+            @RequestBody AlertaDTO request) {
         AlertaDTO respuesta = alertaService.update(id, request);
         return ResponseEntity.ok(new RespuestaApi<>(true, "Alerta actualizada exitosamente", respuesta));
     }

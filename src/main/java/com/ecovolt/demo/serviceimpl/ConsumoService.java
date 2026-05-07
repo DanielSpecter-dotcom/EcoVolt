@@ -12,7 +12,7 @@ import com.ecovolt.demo.exceptions.ResourceNotFoundException;
 import com.ecovolt.demo.repositories.HabitacionRepositorio;
 import com.ecovolt.demo.repositories.HistoricoRepositorio;
 import com.ecovolt.demo.repositories.DispositivoVirtualRepositorio;
-import com.ecovolt.demo.services.IConsumoService;
+import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,67 +24,82 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
-public class ConsumoService implements IConsumoService {
+public class ConsumoService {
 
     private final HabitacionRepositorio habitacionRepositorio;
     private final HistoricoRepositorio historicoRepositorio;
     private final DispositivoVirtualRepositorio dispositivoVirtualRepositorio;
+    private final ModelMapper modelMapper;
 
     public ConsumoService(HabitacionRepositorio habitacionRepositorio,
                           HistoricoRepositorio historicoRepositorio,
-                          DispositivoVirtualRepositorio dispositivoVirtualRepositorio) {
+                          DispositivoVirtualRepositorio dispositivoVirtualRepositorio,
+                          ModelMapper modelMapper) {
         this.habitacionRepositorio = habitacionRepositorio;
         this.historicoRepositorio = historicoRepositorio;
         this.dispositivoVirtualRepositorio = dispositivoVirtualRepositorio;
+        this.modelMapper = modelMapper;
     }
 
-    @Override
     @Transactional
-    public HistoricoDTO create(Historico request) {
-        DispositivoVirtual dispositivo = findDevice(request);
+    public HistoricoDTO create(HistoricoDTO request) {
+        DispositivoVirtual dispositivo = findDevice(request.getDispositivoId());
+        Historico historico = modelMapper.map(request, Historico.class);
 
-        request.setId(null);
-        request.setDispositivo(dispositivo);
-        return toHistoryResponse(historicoRepositorio.save(request));
+        historico.setId(null);
+        historico.setDispositivo(dispositivo);
+        historico = historicoRepositorio.save(historico);
+
+        HistoricoDTO historicoDTO = modelMapper.map(historico, HistoricoDTO.class);
+        historicoDTO.setDispositivoId(historico.getDispositivo().getId());
+        historicoDTO.setDispositivoNombre(historico.getDispositivo().getNombre());
+        return historicoDTO;
     }
 
-    @Override
     @Transactional(readOnly = true)
     public List<HistoricoDTO> findAll() {
         return historicoRepositorio.findAll()
                 .stream()
-                .map(this::toHistoryResponse)
+                .map(historico -> {
+                    HistoricoDTO historicoDTO = modelMapper.map(historico, HistoricoDTO.class);
+                    historicoDTO.setDispositivoId(historico.getDispositivo().getId());
+                    historicoDTO.setDispositivoNombre(historico.getDispositivo().getNombre());
+                    return historicoDTO;
+                })
                 .toList();
     }
 
-    @Override
     @Transactional(readOnly = true)
     public HistoricoDTO findById(Long id) {
-        return toHistoryResponse(findHistory(id));
+        Historico historico = findHistory(id);
+        HistoricoDTO historicoDTO = modelMapper.map(historico, HistoricoDTO.class);
+        historicoDTO.setDispositivoId(historico.getDispositivo().getId());
+        historicoDTO.setDispositivoNombre(historico.getDispositivo().getNombre());
+        return historicoDTO;
     }
 
-    @Override
     @Transactional
-    public HistoricoDTO update(Long id, Historico request) {
+    public HistoricoDTO update(Long id, HistoricoDTO request) {
         Historico historico = findHistory(id);
-        DispositivoVirtual dispositivo = findDevice(request);
+        DispositivoVirtual dispositivo = findDevice(request.getDispositivoId());
 
-        historico.setFechaRegistro(request.getFechaRegistro());
-        historico.setKwhConsumidos(request.getKwhConsumidos());
-        historico.setDuracionMinutos(request.getDuracionMinutos());
+        modelMapper.map(request, historico);
+        historico.setId(id);
         historico.setDispositivo(dispositivo);
 
-        return toHistoryResponse(historicoRepositorio.save(historico));
+        historico = historicoRepositorio.save(historico);
+        HistoricoDTO historicoDTO = modelMapper.map(historico, HistoricoDTO.class);
+        historicoDTO.setDispositivoId(historico.getDispositivo().getId());
+        historicoDTO.setDispositivoNombre(historico.getDispositivo().getNombre());
+        return historicoDTO;
     }
 
-    @Override
     @Transactional
     public void delete(Long id) {
         Historico historico = findHistory(id);
         historicoRepositorio.delete(historico);
     }
 
-    @Override
     @Transactional(readOnly = true)
     public ConsumoHabitacionDTO obtenerConsumoHabitacion(Long habitacionId, Long usuarioId) {
         Habitacion habitacion = habitacionRepositorio.findByIdAndCasaUsuarioId(habitacionId, usuarioId)
@@ -113,7 +128,6 @@ public class ConsumoService implements IConsumoService {
                 .build();
     }
 
-    @Override
     @Transactional(readOnly = true)
     public ComparacionConsumoRespuestaDto compararConsumo(Long usuarioId) {
         List<Historico> historial = historicoRepositorio
@@ -127,7 +141,6 @@ public class ConsumoService implements IConsumoService {
                 .build();
     }
 
-    @Override
     @Transactional(readOnly = true)
     public ConsumoRespuestaDto obtenerConsumoDispositivo(Long dispositivoId, Long usuarioId) {
         DispositivoVirtual device = dispositivoVirtualRepositorio.findByIdAndHabitacionCasaUsuarioId(dispositivoId, usuarioId)
@@ -222,24 +235,13 @@ public class ConsumoService implements IConsumoService {
                 .orElseThrow(() -> new ResourceNotFoundException("Historico no encontrado"));
     }
 
-    private DispositivoVirtual findDevice(Historico historico) {
-        if (historico.getDispositivo() == null || historico.getDispositivo().getId() == null) {
+    private DispositivoVirtual findDevice(Long dispositivoId) {
+        if (dispositivoId == null) {
             throw new ResourceNotFoundException("Dispositivo no encontrado");
         }
 
-        return dispositivoVirtualRepositorio.findById(historico.getDispositivo().getId())
+        return dispositivoVirtualRepositorio.findById(dispositivoId)
                 .orElseThrow(() -> new ResourceNotFoundException("Dispositivo no encontrado"));
     }
 
-    private HistoricoDTO toHistoryResponse(Historico historico) {
-        DispositivoVirtual dispositivo = historico.getDispositivo();
-        return HistoricoDTO.builder()
-                .id(historico.getId())
-                .fechaRegistro(historico.getFechaRegistro())
-                .kwhConsumidos(historico.getKwhConsumidos())
-                .duracionMinutos(historico.getDuracionMinutos())
-                .dispositivoId(dispositivo.getId())
-                .dispositivoNombre(dispositivo.getNombre())
-                .build();
-    }
 }

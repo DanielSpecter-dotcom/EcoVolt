@@ -110,6 +110,7 @@ public class AutenticacionService {
 
         Usuario usuario = modelMapper.map(request, Usuario.class);
         usuario.setDni(dni);
+        usuario.setTipoUsuario(request.getTipoUso());
         usuario.setNombre(reniecResponse.getFirstName());
         usuario.setApellido(buildLastNames(reniecResponse));
         usuario.setCorreo(correo);

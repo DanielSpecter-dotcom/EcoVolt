@@ -5,9 +5,7 @@ import com.ecovolt.demo.dtos.ModoDispositivoDto;
 import com.ecovolt.demo.dtos.AsignarHabitacionDispositivoDto;
 import com.ecovolt.demo.dtos.EstadoActualDispositivoDto;
 import com.ecovolt.demo.dtos.ActualizarDispositivoDto;
-import com.ecovolt.demo.dtos.CrearHabitacionDto;
 import com.ecovolt.demo.dtos.DispositivoDTO;
-import com.ecovolt.demo.dtos.HabitacionDTO;
 import com.ecovolt.demo.entities.Casa;
 import com.ecovolt.demo.entities.Habitacion;
 import com.ecovolt.demo.entities.Historico;
@@ -70,6 +68,7 @@ public class DispositivoService {
         DispositivoVirtual dispositivo = modelMapper.map(request, DispositivoVirtual.class);
         dispositivo.setNombre(buildDeviceName(request.getTipoDispositivo()));
         dispositivo.setTipo(request.getTipoDispositivo().trim());
+        dispositivo.setPotenciaWatts(request.getPotenciaEstimadaWatts());
         dispositivo.setActivo(false);
         dispositivo.setAutomatico(false);
         dispositivo.setEliminado(false);
@@ -78,52 +77,12 @@ public class DispositivoService {
 
         historicoRepositorio.saveAll(buildSimulatedConsumption(dispositivo));
 
-        return toDeviceResponse(dispositivo);
-    }
-
-    @Transactional
-    public HabitacionDTO createRoom(CrearHabitacionDto request) {
-        Usuario usuario = usuarioRepositorio.findById(request.getUsuarioId())
-                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
-
-        Casa casa = casaRepositorio.findFirstByUsuarioIdOrderByIdAsc(usuario.getId())
-                .orElseGet(() -> casaRepositorio.save(Casa.builder()
-                        .nombre("Hogar virtual")
-                        .usuario(usuario)
-                        .build()));
-
-        Habitacion habitacion = habitacionRepositorio.save(Habitacion.builder()
-                .nombre(request.getNombre().trim())
-                .casa(casa)
-                .build());
-
-        return toRoomResponse(habitacion);
-    }
-
-    @Transactional(readOnly = true)
-    public List<HabitacionDTO> findAllRooms() {
-        return habitacionRepositorio.findAll()
-                .stream()
-                .map(this::toRoomResponse)
-                .toList();
-    }
-
-    @Transactional(readOnly = true)
-    public HabitacionDTO findRoomById(Long id) {
-        return toRoomResponse(findRoom(id));
-    }
-
-    @Transactional
-    public HabitacionDTO updateRoom(Long id, CrearHabitacionDto request) {
-        Habitacion habitacion = findRoom(id);
-        habitacion.setNombre(request.getNombre().trim());
-        return toRoomResponse(habitacionRepositorio.save(habitacion));
-    }
-
-    @Transactional
-    public void deleteRoom(Long id) {
-        Habitacion habitacion = findRoom(id);
-        habitacionRepositorio.delete(habitacion);
+        DispositivoDTO dispositivoDTO = modelMapper.map(dispositivo, DispositivoDTO.class);
+        dispositivoDTO.setStatus(dispositivo.isActivo() ? "ON" : "OFF");
+        dispositivoDTO.setMode(dispositivo.isAutomatico() ? "AUTOMATIC" : "MANUAL");
+        dispositivoDTO.setHabitacionId(habitacion.getId());
+        dispositivoDTO.setHabitacionNombre(habitacion.getNombre());
+        return dispositivoDTO;
     }
 
     @Transactional
@@ -132,7 +91,13 @@ public class DispositivoService {
         Habitacion habitacion = findRoomInSameHome(dispositivo, request.getRoomId());
 
         dispositivo.setHabitacion(habitacion);
-        return toDeviceResponse(dispositivoVirtualRepositorio.save(dispositivo));
+        dispositivo = dispositivoVirtualRepositorio.save(dispositivo);
+        DispositivoDTO dispositivoDTO = modelMapper.map(dispositivo, DispositivoDTO.class);
+        dispositivoDTO.setStatus(dispositivo.isActivo() ? "ON" : "OFF");
+        dispositivoDTO.setMode(dispositivo.isAutomatico() ? "AUTOMATIC" : "MANUAL");
+        dispositivoDTO.setHabitacionId(habitacion.getId());
+        dispositivoDTO.setHabitacionNombre(habitacion.getNombre());
+        return dispositivoDTO;
     }
 
     @Transactional
@@ -141,6 +106,7 @@ public class DispositivoService {
         Habitacion habitacion = findRoomInSameHome(dispositivo, request.getRoomId());
         boolean powerChanged = Double.compare(dispositivo.getPotenciaWatts(), request.getPower()) != 0;
 
+        modelMapper.map(request, dispositivo);
         dispositivo.setNombre(request.getNombre().trim());
         dispositivo.setTipo(request.getTipo().trim());
         dispositivo.setPotenciaWatts(request.getPower());
@@ -151,7 +117,12 @@ public class DispositivoService {
             recalculateConsumption(updated);
         }
 
-        return toDeviceResponse(updated);
+        DispositivoDTO dispositivoDTO = modelMapper.map(updated, DispositivoDTO.class);
+        dispositivoDTO.setStatus(updated.isActivo() ? "ON" : "OFF");
+        dispositivoDTO.setMode(updated.isAutomatico() ? "AUTOMATIC" : "MANUAL");
+        dispositivoDTO.setHabitacionId(updated.getHabitacion().getId());
+        dispositivoDTO.setHabitacionNombre(updated.getHabitacion().getNombre());
+        return dispositivoDTO;
     }
 
     @Transactional
@@ -173,27 +144,51 @@ public class DispositivoService {
             historicoRepositorio.save(buildHistory(updated, 0, 1));
         }
 
-        return toDeviceResponse(updated);
+        DispositivoDTO dispositivoDTO = modelMapper.map(updated, DispositivoDTO.class);
+        dispositivoDTO.setStatus(updated.isActivo() ? "ON" : "OFF");
+        dispositivoDTO.setMode(updated.isAutomatico() ? "AUTOMATIC" : "MANUAL");
+        dispositivoDTO.setHabitacionId(updated.getHabitacion().getId());
+        dispositivoDTO.setHabitacionNombre(updated.getHabitacion().getNombre());
+        return dispositivoDTO;
     }
 
     @Transactional(readOnly = true)
     public List<DispositivoDTO> findAll() {
         return dispositivoVirtualRepositorio.findByEliminadoFalseOrderByIdAsc()
                 .stream()
-                .map(this::toDeviceResponse)
+                .map(dispositivo -> {
+                    DispositivoDTO dispositivoDTO = modelMapper.map(dispositivo, DispositivoDTO.class);
+                    dispositivoDTO.setStatus(dispositivo.isActivo() ? "ON" : "OFF");
+                    dispositivoDTO.setMode(dispositivo.isAutomatico() ? "AUTOMATIC" : "MANUAL");
+                    dispositivoDTO.setHabitacionId(dispositivo.getHabitacion().getId());
+                    dispositivoDTO.setHabitacionNombre(dispositivo.getHabitacion().getNombre());
+                    return dispositivoDTO;
+                })
                 .toList();
     }
 
     @Transactional(readOnly = true)
     public DispositivoDTO findById(Long id) {
-        return toDeviceResponse(findActiveDevice(id));
+        DispositivoVirtual dispositivo = findActiveDevice(id);
+        DispositivoDTO dispositivoDTO = modelMapper.map(dispositivo, DispositivoDTO.class);
+        dispositivoDTO.setStatus(dispositivo.isActivo() ? "ON" : "OFF");
+        dispositivoDTO.setMode(dispositivo.isAutomatico() ? "AUTOMATIC" : "MANUAL");
+        dispositivoDTO.setHabitacionId(dispositivo.getHabitacion().getId());
+        dispositivoDTO.setHabitacionNombre(dispositivo.getHabitacion().getNombre());
+        return dispositivoDTO;
     }
 
     @Transactional
     public DispositivoDTO updateMode(Long id, ModoDispositivoDto request) {
         DispositivoVirtual dispositivo = findActiveDevice(id);
         dispositivo.setAutomatico("AUTOMATIC".equals(request.getMode()));
-        return toDeviceResponse(dispositivoVirtualRepositorio.save(dispositivo));
+        dispositivo = dispositivoVirtualRepositorio.save(dispositivo);
+        DispositivoDTO dispositivoDTO = modelMapper.map(dispositivo, DispositivoDTO.class);
+        dispositivoDTO.setStatus(dispositivo.isActivo() ? "ON" : "OFF");
+        dispositivoDTO.setMode(dispositivo.isAutomatico() ? "AUTOMATIC" : "MANUAL");
+        dispositivoDTO.setHabitacionId(dispositivo.getHabitacion().getId());
+        dispositivoDTO.setHabitacionNombre(dispositivo.getHabitacion().getNombre());
+        return dispositivoDTO;
     }
 
     private List<Historico> buildSimulatedConsumption(DispositivoVirtual dispositivo) {
@@ -269,30 +264,4 @@ public class DispositivoService {
                 .orElseThrow(() -> new ResourceNotFoundException("Habitacion no encontrada"));
     }
 
-    private Habitacion findRoom(Long id) {
-        return habitacionRepositorio.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Habitacion no encontrada"));
-    }
-
-    private DispositivoDTO toDeviceResponse(DispositivoVirtual dispositivo) {
-        Habitacion habitacion = dispositivo.getHabitacion();
-        return DispositivoDTO.builder()
-                .id(dispositivo.getId())
-                .nombre(dispositivo.getNombre())
-                .tipo(dispositivo.getTipo())
-                .potenciaWatts(dispositivo.getPotenciaWatts())
-                .status(dispositivo.isActivo() ? "ON" : "OFF")
-                .mode(dispositivo.isAutomatico() ? "AUTOMATIC" : "MANUAL")
-                .habitacionId(habitacion.getId())
-                .habitacionNombre(habitacion.getNombre())
-                .build();
-    }
-
-    private HabitacionDTO toRoomResponse(Habitacion habitacion) {
-        return HabitacionDTO.builder()
-                .id(habitacion.getId())
-                .name(habitacion.getNombre())
-                .homeId(habitacion.getCasa().getId())
-                .build();
-    }
 }

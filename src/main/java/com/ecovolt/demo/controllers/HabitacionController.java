@@ -5,7 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import com.ecovolt.demo.dtos.CrearHabitacionDto;
 import com.ecovolt.demo.dtos.RespuestaApi;
 import com.ecovolt.demo.dtos.HabitacionDTO;
-import com.ecovolt.demo.serviceimpl.DispositivoService;
+import com.ecovolt.demo.serviceimpl.HabitacionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -28,27 +28,27 @@ import java.util.List;
 public class HabitacionController {
 
     @Autowired
-    private DispositivoService dispositivoService;
+    private HabitacionService habitacionService;
 
     @Operation(summary = "Crear un nuevo ambiente")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Ambiente creado")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Usuario no encontrado")
     @PostMapping
     public ResponseEntity<RespuestaApi<HabitacionDTO>> create(@Valid @RequestBody CrearHabitacionDto request) {
-        HabitacionDTO data = dispositivoService.createRoom(request);
+        HabitacionDTO data = habitacionService.create(request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new RespuestaApi<>(true, "Ambiente creado exitosamente", data));
     }
 
     @GetMapping
     public ResponseEntity<RespuestaApi<List<HabitacionDTO>>> findAll() {
-        List<HabitacionDTO> data = dispositivoService.findAllRooms();
+        List<HabitacionDTO> data = habitacionService.findAll();
         return ResponseEntity.ok(new RespuestaApi<>(true, "Ambientes obtenidos exitosamente", data));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<RespuestaApi<HabitacionDTO>> findById(@PathVariable Long id) {
-        HabitacionDTO data = dispositivoService.findRoomById(id);
+        HabitacionDTO data = habitacionService.findById(id);
         return ResponseEntity.ok(new RespuestaApi<>(true, "Ambiente obtenido exitosamente", data));
     }
 
@@ -56,13 +56,13 @@ public class HabitacionController {
     public ResponseEntity<RespuestaApi<HabitacionDTO>> update(
             @PathVariable Long id,
             @Valid @RequestBody CrearHabitacionDto request) {
-        HabitacionDTO data = dispositivoService.updateRoom(id, request);
+        HabitacionDTO data = habitacionService.update(id, request);
         return ResponseEntity.ok(new RespuestaApi<>(true, "Ambiente actualizado exitosamente", data));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<RespuestaApi<Void>> delete(@PathVariable Long id) {
-        dispositivoService.deleteRoom(id);
+        habitacionService.delete(id);
         return ResponseEntity.ok(new RespuestaApi<>(true, "Ambiente eliminado exitosamente", null));
     }
 }

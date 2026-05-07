@@ -40,20 +40,30 @@ public class UsuarioService {
         if (request.getContrasena() != null) {
             request.setContrasena(passwordEncoder.encode(request.getContrasena()));
         }
-        return modelMapper.map(usuarioRepositorio.save(request), UsuarioDTO.class);
+        Usuario usuario = usuarioRepositorio.save(request);
+        UsuarioDTO usuarioDTO = modelMapper.map(usuario, UsuarioDTO.class);
+        usuarioDTO.setRoles(usuario.getRoles().stream().map(Rol::getNombre).sorted().toList());
+        return usuarioDTO;
     }
 
     @Transactional(readOnly = true)
     public List<UsuarioDTO> findAll() {
         return usuarioRepositorio.findAll()
                 .stream()
-                .map(usuario -> modelMapper.map(usuario, UsuarioDTO.class))
+                .map(usuario -> {
+                    UsuarioDTO usuarioDTO = modelMapper.map(usuario, UsuarioDTO.class);
+                    usuarioDTO.setRoles(usuario.getRoles().stream().map(Rol::getNombre).sorted().toList());
+                    return usuarioDTO;
+                })
                 .toList();
     }
 
     @Transactional(readOnly = true)
     public UsuarioDTO findById(Long id) {
-        return modelMapper.map(findUser(id), UsuarioDTO.class);
+        Usuario usuario = findUser(id);
+        UsuarioDTO usuarioDTO = modelMapper.map(usuario, UsuarioDTO.class);
+        usuarioDTO.setRoles(usuario.getRoles().stream().map(Rol::getNombre).sorted().toList());
+        return usuarioDTO;
     }
 
     @Transactional
@@ -63,7 +73,10 @@ public class UsuarioService {
         modelMapper.map(request, usuario);
         usuario.setNombre(usuario.getNombre().trim());
 
-        return modelMapper.map(usuarioRepositorio.save(usuario), UsuarioDTO.class);
+        usuario = usuarioRepositorio.save(usuario);
+        UsuarioDTO usuarioDTO = modelMapper.map(usuario, UsuarioDTO.class);
+        usuarioDTO.setRoles(usuario.getRoles().stream().map(Rol::getNombre).sorted().toList());
+        return usuarioDTO;
     }
 
     @Transactional
@@ -118,8 +131,14 @@ public class UsuarioService {
         Usuario usuario = findUser(id);
 
         modelMapper.map(request, usuario);
+        usuario.setNotificarConsumoExcesivo(request.getConsumoExcesivo());
+        usuario.setNotificarUsoProlongado(request.getUsoProlongado());
+        usuario.setNotificarReporteSemanal(request.getReporteSemanal());
 
-        return modelMapper.map(usuarioRepositorio.save(usuario), UsuarioDTO.class);
+        usuario = usuarioRepositorio.save(usuario);
+        UsuarioDTO usuarioDTO = modelMapper.map(usuario, UsuarioDTO.class);
+        usuarioDTO.setRoles(usuario.getRoles().stream().map(Rol::getNombre).sorted().toList());
+        return usuarioDTO;
     }
 
     private Usuario findUser(Long id) {

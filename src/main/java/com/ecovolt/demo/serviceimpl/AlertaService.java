@@ -10,6 +10,7 @@ import com.ecovolt.demo.exceptions.ResourceNotFoundException;
 import com.ecovolt.demo.repositories.AlertaRepositorio;
 import com.ecovolt.demo.repositories.HistoricoRepositorio;
 import com.ecovolt.demo.repositories.DispositivoVirtualRepositorio;
+import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,39 +27,56 @@ public class AlertaService {
     private final DispositivoVirtualRepositorio dispositivoVirtualRepositorio;
     private final HistoricoRepositorio historicoRepositorio;
     private final AlertaRepositorio alertaRepositorio;
+    private final ModelMapper modelMapper;
 
     public AlertaService(DispositivoVirtualRepositorio dispositivoVirtualRepositorio,
                          HistoricoRepositorio historicoRepositorio,
-                         AlertaRepositorio alertaRepositorio) {
+                         AlertaRepositorio alertaRepositorio,
+                         ModelMapper modelMapper) {
         this.dispositivoVirtualRepositorio = dispositivoVirtualRepositorio;
         this.historicoRepositorio = historicoRepositorio;
         this.alertaRepositorio = alertaRepositorio;
+        this.modelMapper = modelMapper;
     }
 
     @Transactional
-    public AlertaDTO create(Alerta request) {
-        DispositivoVirtual dispositivo = findDevice(request);
+    public AlertaDTO create(AlertaDTO request) {
+        DispositivoVirtual dispositivo = findDevice(request.getDeviceId());
+        Alerta alerta = modelMapper.map(request, Alerta.class);
 
-        request.setId(null);
-        request.setDispositivo(dispositivo);
-        if (request.getFechaCreacion() == null) {
-            request.setFechaCreacion(LocalDateTime.now());
+        alerta.setId(null);
+        alerta.setDispositivo(dispositivo);
+        if (alerta.getFechaCreacion() == null) {
+            alerta.setFechaCreacion(LocalDateTime.now());
         }
 
-        return convertirARespuesta(alertaRepositorio.save(request));
+        alerta = alertaRepositorio.save(alerta);
+        AlertaDTO alertaDTO = modelMapper.map(alerta, AlertaDTO.class);
+        alertaDTO.setDeviceId(alerta.getDispositivo() == null ? null : alerta.getDispositivo().getId());
+        alertaDTO.setDeviceName(alerta.getDispositivo() == null ? null : alerta.getDispositivo().getNombre());
+        return alertaDTO;
     }
 
     @Transactional(readOnly = true)
     public List<AlertaDTO> findAll() {
         return alertaRepositorio.findAll()
                 .stream()
-                .map(this::convertirARespuesta)
+                .map(alerta -> {
+                    AlertaDTO alertaDTO = modelMapper.map(alerta, AlertaDTO.class);
+                    alertaDTO.setDeviceId(alerta.getDispositivo() == null ? null : alerta.getDispositivo().getId());
+                    alertaDTO.setDeviceName(alerta.getDispositivo() == null ? null : alerta.getDispositivo().getNombre());
+                    return alertaDTO;
+                })
                 .toList();
     }
 
     @Transactional(readOnly = true)
     public AlertaDTO findById(Long id) {
-        return convertirARespuesta(findAlert(id));
+        Alerta alerta = findAlert(id);
+        AlertaDTO alertaDTO = modelMapper.map(alerta, AlertaDTO.class);
+        alertaDTO.setDeviceId(alerta.getDispositivo() == null ? null : alerta.getDispositivo().getId());
+        alertaDTO.setDeviceName(alerta.getDispositivo() == null ? null : alerta.getDispositivo().getNombre());
+        return alertaDTO;
     }
 
     @Transactional
@@ -75,7 +93,12 @@ public class AlertaService {
     public List<AlertaDTO> obtenerHistorial(Long usuarioId) {
         return alertaRepositorio.findByDispositivoHabitacionCasaUsuarioIdOrderByFechaCreacionDesc(usuarioId)
                 .stream()
-                .map(this::convertirARespuesta)
+                .map(alerta -> {
+                    AlertaDTO alertaDTO = modelMapper.map(alerta, AlertaDTO.class);
+                    alertaDTO.setDeviceId(alerta.getDispositivo() == null ? null : alerta.getDispositivo().getId());
+                    alertaDTO.setDeviceName(alerta.getDispositivo() == null ? null : alerta.getDispositivo().getNombre());
+                    return alertaDTO;
+                })
                 .toList();
     }
 
@@ -102,7 +125,10 @@ public class AlertaService {
             }
 
             if (valido) {
-                respuesta.add(convertirARespuesta(alerta));
+                AlertaDTO alertaDTO = modelMapper.map(alerta, AlertaDTO.class);
+                alertaDTO.setDeviceId(alerta.getDispositivo() == null ? null : alerta.getDispositivo().getId());
+                alertaDTO.setDeviceName(alerta.getDispositivo() == null ? null : alerta.getDispositivo().getNombre());
+                respuesta.add(alertaDTO);
             }
         }
 
@@ -115,23 +141,33 @@ public class AlertaService {
                 .orElseThrow(() -> new ResourceNotFoundException("Alerta no encontrada"));
 
         alerta.setLeido(true);
-        return convertirARespuesta(alertaRepositorio.save(alerta));
+        alerta = alertaRepositorio.save(alerta);
+        AlertaDTO alertaDTO = modelMapper.map(alerta, AlertaDTO.class);
+        alertaDTO.setDeviceId(alerta.getDispositivo() == null ? null : alerta.getDispositivo().getId());
+        alertaDTO.setDeviceName(alerta.getDispositivo() == null ? null : alerta.getDispositivo().getNombre());
+        return alertaDTO;
     }
 
     @Transactional
-    public AlertaDTO update(Long id, Alerta request) {
+    public AlertaDTO update(Long id, AlertaDTO request) {
         Alerta alerta = findAlert(id);
-        DispositivoVirtual dispositivo = findDevice(request);
+        DispositivoVirtual dispositivo = findDevice(request.getDeviceId());
+        LocalDateTime fechaActual = alerta.getFechaCreacion();
 
-        alerta.setTipo(request.getTipo());
-        alerta.setMensaje(request.getMensaje());
-        alerta.setLeido(request.isLeido());
+        modelMapper.map(request, alerta);
+        alerta.setId(id);
         alerta.setDispositivo(dispositivo);
         if (request.getFechaCreacion() != null) {
             alerta.setFechaCreacion(request.getFechaCreacion());
+        } else {
+            alerta.setFechaCreacion(fechaActual);
         }
 
-        return convertirARespuesta(alertaRepositorio.save(alerta));
+        alerta = alertaRepositorio.save(alerta);
+        AlertaDTO alertaDTO = modelMapper.map(alerta, AlertaDTO.class);
+        alertaDTO.setDeviceId(alerta.getDispositivo() == null ? null : alerta.getDispositivo().getId());
+        alertaDTO.setDeviceName(alerta.getDispositivo() == null ? null : alerta.getDispositivo().getNombre());
+        return alertaDTO;
     }
 
     @Transactional
@@ -181,26 +217,13 @@ public class AlertaService {
                 .orElseThrow(() -> new ResourceNotFoundException("Alerta no encontrada"));
     }
 
-    private DispositivoVirtual findDevice(Alerta alerta) {
-        if (alerta.getDispositivo() == null || alerta.getDispositivo().getId() == null) {
+    private DispositivoVirtual findDevice(Long dispositivoId) {
+        if (dispositivoId == null) {
             return null;
         }
 
-        return dispositivoVirtualRepositorio.findById(alerta.getDispositivo().getId())
+        return dispositivoVirtualRepositorio.findById(dispositivoId)
                 .orElseThrow(() -> new ResourceNotFoundException("Dispositivo no encontrado"));
     }
 
-    private AlertaDTO convertirARespuesta(Alerta alerta) {
-        DispositivoVirtual dispositivo = alerta.getDispositivo();
-
-        return AlertaDTO.builder()
-                .id(alerta.getId())
-                .tipo(alerta.getTipo())
-                .mensaje(alerta.getMensaje())
-                .fechaCreacion(alerta.getFechaCreacion())
-                .leido(alerta.isLeido())
-                .deviceId(dispositivo == null ? null : dispositivo.getId())
-                .deviceName(dispositivo == null ? null : dispositivo.getNombre())
-                .build();
-    }
 }

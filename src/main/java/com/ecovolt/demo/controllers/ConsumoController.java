@@ -7,9 +7,8 @@ import com.ecovolt.demo.dtos.ComparacionConsumoRespuestaDto;
 import com.ecovolt.demo.dtos.ConsumoRespuestaDto;
 import com.ecovolt.demo.dtos.HistoricoDTO;
 import com.ecovolt.demo.dtos.ConsumoHabitacionDTO;
-import com.ecovolt.demo.entities.Historico;
 import com.ecovolt.demo.security.CustomUserDetails;
-import com.ecovolt.demo.services.IConsumoService;
+import com.ecovolt.demo.serviceimpl.ConsumoService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -29,10 +28,10 @@ import java.util.List;
 public class ConsumoController {
 
     @Autowired
-    private IConsumoService consumoService;
+    private ConsumoService consumoService;
 
     @PostMapping("/history")
-    public ResponseEntity<RespuestaApi<HistoricoDTO>> create(@RequestBody Historico request) {
+    public ResponseEntity<RespuestaApi<HistoricoDTO>> create(@RequestBody HistoricoDTO request) {
         HistoricoDTO data = consumoService.create(request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new RespuestaApi<>(true, "Historico creado exitosamente", data));
@@ -53,7 +52,7 @@ public class ConsumoController {
     @PutMapping("/history/{id}")
     public ResponseEntity<RespuestaApi<HistoricoDTO>> update(
             @PathVariable Long id,
-            @RequestBody Historico request) {
+            @RequestBody HistoricoDTO request) {
         HistoricoDTO data = consumoService.update(id, request);
         return ResponseEntity.ok(new RespuestaApi<>(true, "Historico actualizado exitosamente", data));
     }
