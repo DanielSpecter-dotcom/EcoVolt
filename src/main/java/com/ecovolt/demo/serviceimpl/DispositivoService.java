@@ -1,13 +1,13 @@
 package com.ecovolt.demo.serviceimpl;
 
-import com.ecovolt.demo.dtos.request.CrearDispositivoDto;
-import com.ecovolt.demo.dtos.request.ModoDispositivoDto;
-import com.ecovolt.demo.dtos.request.AsignarHabitacionDispositivoDto;
-import com.ecovolt.demo.dtos.request.EstadoActualDispositivoDto;
-import com.ecovolt.demo.dtos.request.ActualizarDispositivoDto;
-import com.ecovolt.demo.dtos.request.CrearHabitacionDto;
-import com.ecovolt.demo.dtos.response.DispositivoRespuestaDto;
-import com.ecovolt.demo.dtos.response.HabitacionRespuestaDto;
+import com.ecovolt.demo.dtos.CrearDispositivoDto;
+import com.ecovolt.demo.dtos.ModoDispositivoDto;
+import com.ecovolt.demo.dtos.AsignarHabitacionDispositivoDto;
+import com.ecovolt.demo.dtos.EstadoActualDispositivoDto;
+import com.ecovolt.demo.dtos.ActualizarDispositivoDto;
+import com.ecovolt.demo.dtos.CrearHabitacionDto;
+import com.ecovolt.demo.dtos.DispositivoDTO;
+import com.ecovolt.demo.dtos.HabitacionDTO;
 import com.ecovolt.demo.entities.Casa;
 import com.ecovolt.demo.entities.Habitacion;
 import com.ecovolt.demo.entities.Historico;
@@ -51,7 +51,7 @@ public class DispositivoService {
     }
 
     @Transactional
-    public DispositivoRespuestaDto create(CrearDispositivoDto request) {
+    public DispositivoDTO create(CrearDispositivoDto request) {
         Usuario usuario = usuarioRepositorio.findById(request.getUsuarioId())
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
 
@@ -82,7 +82,7 @@ public class DispositivoService {
     }
 
     @Transactional
-    public HabitacionRespuestaDto createRoom(CrearHabitacionDto request) {
+    public HabitacionDTO createRoom(CrearHabitacionDto request) {
         Usuario usuario = usuarioRepositorio.findById(request.getUsuarioId())
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
 
@@ -101,7 +101,7 @@ public class DispositivoService {
     }
 
     @Transactional(readOnly = true)
-    public List<HabitacionRespuestaDto> findAllRooms() {
+    public List<HabitacionDTO> findAllRooms() {
         return habitacionRepositorio.findAll()
                 .stream()
                 .map(this::toRoomResponse)
@@ -109,12 +109,12 @@ public class DispositivoService {
     }
 
     @Transactional(readOnly = true)
-    public HabitacionRespuestaDto findRoomById(Long id) {
+    public HabitacionDTO findRoomById(Long id) {
         return toRoomResponse(findRoom(id));
     }
 
     @Transactional
-    public HabitacionRespuestaDto updateRoom(Long id, CrearHabitacionDto request) {
+    public HabitacionDTO updateRoom(Long id, CrearHabitacionDto request) {
         Habitacion habitacion = findRoom(id);
         habitacion.setNombre(request.getNombre().trim());
         return toRoomResponse(habitacionRepositorio.save(habitacion));
@@ -127,7 +127,7 @@ public class DispositivoService {
     }
 
     @Transactional
-    public DispositivoRespuestaDto assignRoom(Long id, AsignarHabitacionDispositivoDto request) {
+    public DispositivoDTO assignRoom(Long id, AsignarHabitacionDispositivoDto request) {
         DispositivoVirtual dispositivo = findActiveDevice(id);
         Habitacion habitacion = findRoomInSameHome(dispositivo, request.getRoomId());
 
@@ -136,7 +136,7 @@ public class DispositivoService {
     }
 
     @Transactional
-    public DispositivoRespuestaDto update(Long id, ActualizarDispositivoDto request) {
+    public DispositivoDTO update(Long id, ActualizarDispositivoDto request) {
         DispositivoVirtual dispositivo = findActiveDevice(id);
         Habitacion habitacion = findRoomInSameHome(dispositivo, request.getRoomId());
         boolean powerChanged = Double.compare(dispositivo.getPotenciaWatts(), request.getPower()) != 0;
@@ -163,7 +163,7 @@ public class DispositivoService {
     }
 
     @Transactional
-    public DispositivoRespuestaDto updateStatus(Long id, EstadoActualDispositivoDto request) {
+    public DispositivoDTO updateStatus(Long id, EstadoActualDispositivoDto request) {
         DispositivoVirtual dispositivo = findActiveDevice(id);
         boolean desiredOn = "ON".equals(request.getStatus());
 
@@ -177,7 +177,7 @@ public class DispositivoService {
     }
 
     @Transactional(readOnly = true)
-    public List<DispositivoRespuestaDto> findAll() {
+    public List<DispositivoDTO> findAll() {
         return dispositivoVirtualRepositorio.findByEliminadoFalseOrderByIdAsc()
                 .stream()
                 .map(this::toDeviceResponse)
@@ -185,12 +185,12 @@ public class DispositivoService {
     }
 
     @Transactional(readOnly = true)
-    public DispositivoRespuestaDto findById(Long id) {
+    public DispositivoDTO findById(Long id) {
         return toDeviceResponse(findActiveDevice(id));
     }
 
     @Transactional
-    public DispositivoRespuestaDto updateMode(Long id, ModoDispositivoDto request) {
+    public DispositivoDTO updateMode(Long id, ModoDispositivoDto request) {
         DispositivoVirtual dispositivo = findActiveDevice(id);
         dispositivo.setAutomatico("AUTOMATIC".equals(request.getMode()));
         return toDeviceResponse(dispositivoVirtualRepositorio.save(dispositivo));
@@ -274,9 +274,9 @@ public class DispositivoService {
                 .orElseThrow(() -> new ResourceNotFoundException("Habitacion no encontrada"));
     }
 
-    private DispositivoRespuestaDto toDeviceResponse(DispositivoVirtual dispositivo) {
+    private DispositivoDTO toDeviceResponse(DispositivoVirtual dispositivo) {
         Habitacion habitacion = dispositivo.getHabitacion();
-        return DispositivoRespuestaDto.builder()
+        return DispositivoDTO.builder()
                 .id(dispositivo.getId())
                 .nombre(dispositivo.getNombre())
                 .tipo(dispositivo.getTipo())
@@ -288,8 +288,8 @@ public class DispositivoService {
                 .build();
     }
 
-    private HabitacionRespuestaDto toRoomResponse(Habitacion habitacion) {
-        return HabitacionRespuestaDto.builder()
+    private HabitacionDTO toRoomResponse(Habitacion habitacion) {
+        return HabitacionDTO.builder()
                 .id(habitacion.getId())
                 .name(habitacion.getNombre())
                 .homeId(habitacion.getCasa().getId())

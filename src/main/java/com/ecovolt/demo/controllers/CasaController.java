@@ -2,10 +2,10 @@ package com.ecovolt.demo.controllers;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
-import com.ecovolt.demo.dtos.request.ModoAusenteDto;
-import com.ecovolt.demo.dtos.response.RespuestaApi;
-import com.ecovolt.demo.dtos.response.CasaRespuestaDto;
-import com.ecovolt.demo.dtos.response.ModoAusenteRespuestaDto;
+import com.ecovolt.demo.dtos.ModoAusenteDto;
+import com.ecovolt.demo.dtos.RespuestaApi;
+import com.ecovolt.demo.dtos.CasaDTO;
+import com.ecovolt.demo.dtos.ModoAusenteRespuestaDto;
 import com.ecovolt.demo.entities.Casa;
 import com.ecovolt.demo.services.HomeModeService;
 import jakarta.validation.Valid;
@@ -31,29 +31,29 @@ public class CasaController {
     private HomeModeService modoCasaService;
 
     @PostMapping
-    public ResponseEntity<RespuestaApi<CasaRespuestaDto>> create(@RequestBody Casa request) {
-        CasaRespuestaDto data = modoCasaService.create(request);
+    public ResponseEntity<RespuestaApi<CasaDTO>> create(@RequestBody Casa request) {
+        CasaDTO data = modoCasaService.create(request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new RespuestaApi<>(true, "Casa creada exitosamente", data));
     }
 
     @GetMapping
-    public ResponseEntity<RespuestaApi<List<CasaRespuestaDto>>> findAll() {
-        List<CasaRespuestaDto> data = modoCasaService.findAll();
+    public ResponseEntity<RespuestaApi<List<CasaDTO>>> findAll() {
+        List<CasaDTO> data = modoCasaService.findAll();
         return ResponseEntity.ok(new RespuestaApi<>(true, "Casas obtenidas exitosamente", data));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<RespuestaApi<CasaRespuestaDto>> findById(@PathVariable Long id) {
-        CasaRespuestaDto data = modoCasaService.findById(id);
+    public ResponseEntity<RespuestaApi<CasaDTO>> findById(@PathVariable Long id) {
+        CasaDTO data = modoCasaService.findById(id);
         return ResponseEntity.ok(new RespuestaApi<>(true, "Casa obtenida exitosamente", data));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<RespuestaApi<CasaRespuestaDto>> update(
+    public ResponseEntity<RespuestaApi<CasaDTO>> update(
             @PathVariable Long id,
             @RequestBody Casa request) {
-        CasaRespuestaDto data = modoCasaService.update(id, request);
+        CasaDTO data = modoCasaService.update(id, request);
         return ResponseEntity.ok(new RespuestaApi<>(true, "Casa actualizada exitosamente", data));
     }
 

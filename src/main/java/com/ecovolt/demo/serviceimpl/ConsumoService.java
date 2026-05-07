@@ -1,10 +1,10 @@
 package com.ecovolt.demo.serviceimpl;
 
-import com.ecovolt.demo.dtos.response.ItemComparacionConsumoDto;
-import com.ecovolt.demo.dtos.response.ComparacionConsumoRespuestaDto;
-import com.ecovolt.demo.dtos.response.ConsumoRespuestaDto;
-import com.ecovolt.demo.dtos.response.HistoricoRespuestaDto;
-import com.ecovolt.demo.dtos.response.ConsumoHabitacionRespuestaDto;
+import com.ecovolt.demo.dtos.ItemComparacionConsumoDto;
+import com.ecovolt.demo.dtos.ComparacionConsumoRespuestaDto;
+import com.ecovolt.demo.dtos.ConsumoRespuestaDto;
+import com.ecovolt.demo.dtos.HistoricoDTO;
+import com.ecovolt.demo.dtos.ConsumoHabitacionDTO;
 import com.ecovolt.demo.entities.Habitacion;
 import com.ecovolt.demo.entities.Historico;
 import com.ecovolt.demo.entities.DispositivoVirtual;
@@ -40,7 +40,7 @@ public class ConsumoService implements IConsumoService {
 
     @Override
     @Transactional
-    public HistoricoRespuestaDto create(Historico request) {
+    public HistoricoDTO create(Historico request) {
         DispositivoVirtual dispositivo = findDevice(request);
 
         request.setId(null);
@@ -50,7 +50,7 @@ public class ConsumoService implements IConsumoService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<HistoricoRespuestaDto> findAll() {
+    public List<HistoricoDTO> findAll() {
         return historicoRepositorio.findAll()
                 .stream()
                 .map(this::toHistoryResponse)
@@ -59,13 +59,13 @@ public class ConsumoService implements IConsumoService {
 
     @Override
     @Transactional(readOnly = true)
-    public HistoricoRespuestaDto findById(Long id) {
+    public HistoricoDTO findById(Long id) {
         return toHistoryResponse(findHistory(id));
     }
 
     @Override
     @Transactional
-    public HistoricoRespuestaDto update(Long id, Historico request) {
+    public HistoricoDTO update(Long id, Historico request) {
         Historico historico = findHistory(id);
         DispositivoVirtual dispositivo = findDevice(request);
 
@@ -86,7 +86,7 @@ public class ConsumoService implements IConsumoService {
 
     @Override
     @Transactional(readOnly = true)
-    public ConsumoHabitacionRespuestaDto obtenerConsumoHabitacion(Long habitacionId, Long usuarioId) {
+    public ConsumoHabitacionDTO obtenerConsumoHabitacion(Long habitacionId, Long usuarioId) {
         Habitacion habitacion = habitacionRepositorio.findByIdAndCasaUsuarioId(habitacionId, usuarioId)
                 .orElseThrow(() -> new ResourceNotFoundException("Habitacion no encontrada"));
 
@@ -104,7 +104,7 @@ public class ConsumoService implements IConsumoService {
                 .mapToInt(Integer::intValue)
                 .sum();
 
-        return ConsumoHabitacionRespuestaDto.builder()
+        return ConsumoHabitacionDTO.builder()
                 .roomId(habitacion.getId())
                 .roomName(habitacion.getNombre())
                 .totalKwh(round(totalKwh))
@@ -231,9 +231,9 @@ public class ConsumoService implements IConsumoService {
                 .orElseThrow(() -> new ResourceNotFoundException("Dispositivo no encontrado"));
     }
 
-    private HistoricoRespuestaDto toHistoryResponse(Historico historico) {
+    private HistoricoDTO toHistoryResponse(Historico historico) {
         DispositivoVirtual dispositivo = historico.getDispositivo();
-        return HistoricoRespuestaDto.builder()
+        return HistoricoDTO.builder()
                 .id(historico.getId())
                 .fechaRegistro(historico.getFechaRegistro())
                 .kwhConsumidos(historico.getKwhConsumidos())

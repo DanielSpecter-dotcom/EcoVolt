@@ -1,10 +1,10 @@
 package com.ecovolt.demo.Config;
 
-import com.ecovolt.demo.dtos.request.CrearDispositivoDto;
-import com.ecovolt.demo.dtos.request.ConfiguracionNotificacionesDto;
-import com.ecovolt.demo.dtos.request.RegistroUsuarioDto;
-import com.ecovolt.demo.dtos.response.DispositivoRespuestaDto;
-import com.ecovolt.demo.dtos.response.UsuarioRespuestaDto;
+import com.ecovolt.demo.dtos.CrearDispositivoDto;
+import com.ecovolt.demo.dtos.ConfiguracionNotificacionesDto;
+import com.ecovolt.demo.dtos.RegistroUsuarioDto;
+import com.ecovolt.demo.dtos.DispositivoDTO;
+import com.ecovolt.demo.dtos.UsuarioDTO;
 import com.ecovolt.demo.entities.Rol;
 import com.ecovolt.demo.entities.Usuario;
 import com.ecovolt.demo.entities.DispositivoVirtual;
@@ -51,12 +51,12 @@ public class ModelMapperConfig {
                 });
 
         // Respuesta de Usuario (con Converter inline para ahorrar espacio)
-        mm.createTypeMap(Usuario.class, UsuarioRespuestaDto.class)
+        mm.createTypeMap(Usuario.class, UsuarioDTO.class)
                 .addMappings(m -> m.using(ctx ->
                                 ctx.getSource() == null ? List.of() :
                                         ((Set<Rol>) ctx.getSource()).stream()
                                                 .map(Rol::getNombre).sorted().toList())
-                        .map(Usuario::getRoles, UsuarioRespuestaDto::setRoles));
+                        .map(Usuario::getRoles, UsuarioDTO::setRoles));
     }
 
     private void configureDeviceMappings(ModelMapper mm) {
@@ -69,7 +69,7 @@ public class ModelMapperConfig {
                 });
 
         // Respuesta de Dispositivo (Mapeo de ID de habitación)
-        mm.createTypeMap(DispositivoVirtual.class, DispositivoRespuestaDto.class)
-                .addMapping(src -> src.getHabitacion().getId(), DispositivoRespuestaDto::setHabitacionId);
+        mm.createTypeMap(DispositivoVirtual.class, DispositivoDTO.class)
+                .addMapping(src -> src.getHabitacion().getId(), DispositivoDTO::setHabitacionId);
     }
 }

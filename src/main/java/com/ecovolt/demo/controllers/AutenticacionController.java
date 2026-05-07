@@ -2,13 +2,13 @@ package com.ecovolt.demo.controllers;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
-import com.ecovolt.demo.dtos.request.InicioSesionSolicitudDto;
-import com.ecovolt.demo.dtos.request.RegistroUsuarioDto;
-import com.ecovolt.demo.dtos.request.ReenviarVerificacionDto;
-import com.ecovolt.demo.dtos.request.VerificarCorreoDto;
-import com.ecovolt.demo.dtos.response.RespuestaApi;
-import com.ecovolt.demo.dtos.response.InicioSesionRespuestaDto;
-import com.ecovolt.demo.dtos.response.VerificacionEnviadaRespuestaDto;
+import com.ecovolt.demo.dtos.InicioSesionSolicitudDto;
+import com.ecovolt.demo.dtos.RegistroUsuarioDto;
+import com.ecovolt.demo.dtos.ReenviarVerificacionDto;
+import com.ecovolt.demo.dtos.VerificarCorreoDto;
+import com.ecovolt.demo.dtos.RespuestaApi;
+import com.ecovolt.demo.dtos.InicioSesionRespuestaDto;
+import com.ecovolt.demo.dtos.VerificacionEnviadaRespuestaDto;
 import com.ecovolt.demo.serviceimpl.AutenticacionService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;

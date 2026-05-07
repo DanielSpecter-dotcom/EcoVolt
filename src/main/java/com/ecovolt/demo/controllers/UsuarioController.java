@@ -2,11 +2,11 @@ package com.ecovolt.demo.controllers;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
-import com.ecovolt.demo.dtos.request.ConfiguracionNotificacionesDto;
-import com.ecovolt.demo.dtos.request.ActualizarContrasenaDto;
-import com.ecovolt.demo.dtos.request.ActualizarPerfilUsuarioDto;
-import com.ecovolt.demo.dtos.response.RespuestaApi;
-import com.ecovolt.demo.dtos.response.UsuarioRespuestaDto;
+import com.ecovolt.demo.dtos.ConfiguracionNotificacionesDto;
+import com.ecovolt.demo.dtos.ActualizarContrasenaDto;
+import com.ecovolt.demo.dtos.ActualizarPerfilUsuarioDto;
+import com.ecovolt.demo.dtos.RespuestaApi;
+import com.ecovolt.demo.dtos.UsuarioDTO;
 import com.ecovolt.demo.entities.Rol;
 import com.ecovolt.demo.entities.Usuario;
 import com.ecovolt.demo.serviceimpl.UsuarioService;
@@ -32,29 +32,29 @@ public class UsuarioController {
     private UsuarioService usuarioService;
 
     @PostMapping
-    public ResponseEntity<RespuestaApi<UsuarioRespuestaDto>> create(@RequestBody Usuario request) {
-        UsuarioRespuestaDto data = usuarioService.create(request);
+    public ResponseEntity<RespuestaApi<UsuarioDTO>> create(@RequestBody Usuario request) {
+        UsuarioDTO data = usuarioService.create(request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new RespuestaApi<>(true, "Usuario creado exitosamente", data));
     }
 
     @GetMapping
-    public ResponseEntity<RespuestaApi<List<UsuarioRespuestaDto>>> findAll() {
-        List<UsuarioRespuestaDto> data = usuarioService.findAll();
+    public ResponseEntity<RespuestaApi<List<UsuarioDTO>>> findAll() {
+        List<UsuarioDTO> data = usuarioService.findAll();
         return ResponseEntity.ok(new RespuestaApi<>(true, "Usuarios obtenidos exitosamente", data));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<RespuestaApi<UsuarioRespuestaDto>> findById(@PathVariable Long id) {
-        UsuarioRespuestaDto data = usuarioService.findById(id);
+    public ResponseEntity<RespuestaApi<UsuarioDTO>> findById(@PathVariable Long id) {
+        UsuarioDTO data = usuarioService.findById(id);
         return ResponseEntity.ok(new RespuestaApi<>(true, "Usuario obtenido exitosamente", data));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<RespuestaApi<UsuarioRespuestaDto>> updateProfile(
+    public ResponseEntity<RespuestaApi<UsuarioDTO>> updateProfile(
             @PathVariable Long id,
             @Valid @RequestBody ActualizarPerfilUsuarioDto request) {
-        UsuarioRespuestaDto data = usuarioService.updateProfile(id, request);
+        UsuarioDTO data = usuarioService.updateProfile(id, request);
         return ResponseEntity.ok(new RespuestaApi<>(true, "Perfil actualizado exitosamente", data));
     }
 
@@ -67,10 +67,10 @@ public class UsuarioController {
     }
 
     @PatchMapping("/{id}/notification-settings")
-    public ResponseEntity<RespuestaApi<UsuarioRespuestaDto>> updateNotificationSettings(
+    public ResponseEntity<RespuestaApi<UsuarioDTO>> updateNotificationSettings(
             @PathVariable Long id,
             @Valid @RequestBody ConfiguracionNotificacionesDto request) {
-        UsuarioRespuestaDto data = usuarioService.updateNotificationSettings(id, request);
+        UsuarioDTO data = usuarioService.updateNotificationSettings(id, request);
         return ResponseEntity.ok(new RespuestaApi<>(true, "Configuracion de notificaciones actualizada", data));
     }
 

@@ -2,10 +2,10 @@ package com.ecovolt.demo.controllers;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
-import com.ecovolt.demo.dtos.request.CrearEscenaDto;
-import com.ecovolt.demo.dtos.response.RespuestaApi;
-import com.ecovolt.demo.dtos.response.ActivacionEscenaRespuestaDto;
-import com.ecovolt.demo.dtos.response.EscenaRespuestaDto;
+import com.ecovolt.demo.dtos.CrearEscenaDto;
+import com.ecovolt.demo.dtos.RespuestaApi;
+import com.ecovolt.demo.dtos.ActivacionEscenaDTO;
+import com.ecovolt.demo.dtos.EscenaDTO;
 import com.ecovolt.demo.services.SceneService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -29,29 +29,29 @@ public class EscenaController {
     private SceneService escenaService;
 
     @PostMapping
-    public ResponseEntity<RespuestaApi<EscenaRespuestaDto>> create(@Valid @RequestBody CrearEscenaDto request) {
-        EscenaRespuestaDto data = escenaService.create(request);
+    public ResponseEntity<RespuestaApi<EscenaDTO>> create(@Valid @RequestBody CrearEscenaDto request) {
+        EscenaDTO data = escenaService.create(request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new RespuestaApi<>(true, "Escena creada exitosamente", data));
     }
 
     @GetMapping
-    public ResponseEntity<RespuestaApi<List<EscenaRespuestaDto>>> findAll() {
-        List<EscenaRespuestaDto> data = escenaService.findAll();
+    public ResponseEntity<RespuestaApi<List<EscenaDTO>>> findAll() {
+        List<EscenaDTO> data = escenaService.findAll();
         return ResponseEntity.ok(new RespuestaApi<>(true, "Escenas obtenidas exitosamente", data));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<RespuestaApi<EscenaRespuestaDto>> findById(@PathVariable Long id) {
-        EscenaRespuestaDto data = escenaService.findById(id);
+    public ResponseEntity<RespuestaApi<EscenaDTO>> findById(@PathVariable Long id) {
+        EscenaDTO data = escenaService.findById(id);
         return ResponseEntity.ok(new RespuestaApi<>(true, "Escena obtenida exitosamente", data));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<RespuestaApi<EscenaRespuestaDto>> update(
+    public ResponseEntity<RespuestaApi<EscenaDTO>> update(
             @PathVariable Long id,
             @Valid @RequestBody CrearEscenaDto request) {
-        EscenaRespuestaDto data = escenaService.update(id, request);
+        EscenaDTO data = escenaService.update(id, request);
         return ResponseEntity.ok(new RespuestaApi<>(true, "Escena actualizada exitosamente", data));
     }
 
@@ -62,8 +62,8 @@ public class EscenaController {
     }
 
     @PostMapping("/{id}/activate")
-    public ResponseEntity<RespuestaApi<ActivacionEscenaRespuestaDto>> activate(@PathVariable Long id) {
-        ActivacionEscenaRespuestaDto data = escenaService.activate(id);
+    public ResponseEntity<RespuestaApi<ActivacionEscenaDTO>> activate(@PathVariable Long id) {
+        ActivacionEscenaDTO data = escenaService.activate(id);
         return ResponseEntity.ok(new RespuestaApi<>(true, "Escena activada exitosamente", data));
     }
 }

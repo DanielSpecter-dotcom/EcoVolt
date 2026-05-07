@@ -1,25 +1,25 @@
 package com.ecovolt.demo.services;
 
-import com.ecovolt.demo.dtos.request.CrearEscenaDto;
-import com.ecovolt.demo.dtos.response.ActivacionEscenaRespuestaDto;
-import com.ecovolt.demo.dtos.response.EscenaRespuestaDto;
+import com.ecovolt.demo.dtos.CrearEscenaDto;
+import com.ecovolt.demo.dtos.ActivacionEscenaDTO;
+import com.ecovolt.demo.dtos.EscenaDTO;
 
 import java.util.List;
 
 public interface SceneService {
 
     // Debe persistir la escena y sus estados deseados por dispositivo.
-    EscenaRespuestaDto create(CrearEscenaDto request);
+    EscenaDTO create(CrearEscenaDto request);
 
     // Debe aplicar en bloque los estados configurados sobre los dispositivos de la escena.
-    ActivacionEscenaRespuestaDto activate(Long sceneId);
+    ActivacionEscenaDTO activate(Long sceneId);
 
     // Debe retornar las escenas visibles para el dashboard.
-    List<EscenaRespuestaDto> findAll();
+    List<EscenaDTO> findAll();
 
-    EscenaRespuestaDto findById(Long sceneId);
+    EscenaDTO findById(Long sceneId);
 
-    EscenaRespuestaDto update(Long sceneId, CrearEscenaDto request);
+    EscenaDTO update(Long sceneId, CrearEscenaDto request);
 
     void delete(Long sceneId);
 }

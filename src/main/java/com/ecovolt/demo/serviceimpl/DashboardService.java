@@ -1,14 +1,14 @@
 package com.ecovolt.demo.serviceimpl;
 
-import com.ecovolt.demo.dtos.request.ActualizarRutinaDto;
-import com.ecovolt.demo.dtos.response.ActividadPanelDto;
-import com.ecovolt.demo.dtos.response.DispositivoPanelDto;
-import com.ecovolt.demo.dtos.response.EscenaRutinaPanelDto;
-import com.ecovolt.demo.dtos.response.EscenasRutinasPanelDto;
-import com.ecovolt.demo.dtos.response.ResumenPanelDto;
-import com.ecovolt.demo.dtos.response.RutinaRespuestaDto;
-import com.ecovolt.demo.dtos.response.ActivacionEscenaRespuestaDto;
-import com.ecovolt.demo.dtos.response.EscenaRespuestaDto;
+import com.ecovolt.demo.dtos.ActualizarRutinaDto;
+import com.ecovolt.demo.dtos.ActividadPanelDto;
+import com.ecovolt.demo.dtos.DispositivoPanelDto;
+import com.ecovolt.demo.dtos.EscenaRutinaPanelDto;
+import com.ecovolt.demo.dtos.EscenasRutinasPanelDto;
+import com.ecovolt.demo.dtos.ResumenPanelDto;
+import com.ecovolt.demo.dtos.RutinaDTO;
+import com.ecovolt.demo.dtos.ActivacionEscenaDTO;
+import com.ecovolt.demo.dtos.EscenaDTO;
 import com.ecovolt.demo.entities.Alerta;
 import com.ecovolt.demo.entities.DispositivoVirtual;
 import com.ecovolt.demo.entities.Historico;
@@ -117,7 +117,7 @@ public class DashboardService {
         List<EscenaRutinaPanelDto> escenas = new ArrayList<>();
         List<EscenaRutinaPanelDto> rutinas = new ArrayList<>();
 
-        for (EscenaRespuestaDto escena : escenaService.findAll()) {
+        for (EscenaDTO escena : escenaService.findAll()) {
             escenas.add(new EscenaRutinaPanelDto(
                     escena.getId(),
                     escena.getName(),
@@ -126,7 +126,7 @@ public class DashboardService {
             ));
         }
 
-        for (RutinaRespuestaDto rutina : rutinaService.findAll()) {
+        for (RutinaDTO rutina : rutinaService.findAll()) {
             String estado = obtenerEstadoRutina(rutina);
             rutinas.add(new EscenaRutinaPanelDto(
                     rutina.getId(),
@@ -139,11 +139,11 @@ public class DashboardService {
         return new EscenasRutinasPanelDto(escenas, rutinas);
     }
 
-    public ActivacionEscenaRespuestaDto activarEscena(Long escenaId) {
+    public ActivacionEscenaDTO activarEscena(Long escenaId) {
         return escenaService.activate(escenaId);
     }
 
-    public RutinaRespuestaDto pausarRutina(Long rutinaId) {
+    public RutinaDTO pausarRutina(Long rutinaId) {
         ActualizarRutinaDto request = new ActualizarRutinaDto();
         request.setHabilitar(false);
         return rutinaService.update(rutinaId, request);
@@ -176,7 +176,7 @@ public class DashboardService {
         return actividades;
     }
 
-    private String obtenerEstadoRutina(RutinaRespuestaDto rutina) {
+    private String obtenerEstadoRutina(RutinaDTO rutina) {
         if (Boolean.TRUE.equals(rutina.getPausedByAwayMode())) {
             return "pausada";
         }

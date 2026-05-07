@@ -1,6 +1,6 @@
 package com.ecovolt.demo.services.feingservice;
 
-import com.ecovolt.demo.dtos.response.ReniecRespuesta;
+import com.ecovolt.demo.dtos.ReniecRespuesta;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 

@@ -1,12 +1,12 @@
 package com.ecovolt.demo.controllers;
 
-import com.ecovolt.demo.dtos.response.ActividadPanelDto;
-import com.ecovolt.demo.dtos.response.RespuestaApi;
-import com.ecovolt.demo.dtos.response.DispositivoPanelDto;
-import com.ecovolt.demo.dtos.response.EscenasRutinasPanelDto;
-import com.ecovolt.demo.dtos.response.ResumenPanelDto;
-import com.ecovolt.demo.dtos.response.RutinaRespuestaDto;
-import com.ecovolt.demo.dtos.response.ActivacionEscenaRespuestaDto;
+import com.ecovolt.demo.dtos.ActividadPanelDto;
+import com.ecovolt.demo.dtos.RespuestaApi;
+import com.ecovolt.demo.dtos.DispositivoPanelDto;
+import com.ecovolt.demo.dtos.EscenasRutinasPanelDto;
+import com.ecovolt.demo.dtos.ResumenPanelDto;
+import com.ecovolt.demo.dtos.RutinaDTO;
+import com.ecovolt.demo.dtos.ActivacionEscenaDTO;
 import com.ecovolt.demo.security.CustomUserDetails;
 import com.ecovolt.demo.serviceimpl.DashboardService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,14 +49,14 @@ public class DashboardController {
     }
 
     @PostMapping("/scenes/{id}/activate")
-    public ResponseEntity<RespuestaApi<ActivacionEscenaRespuestaDto>> activarEscena(@PathVariable Long id) {
-        ActivacionEscenaRespuestaDto data = dashboardService.activarEscena(id);
+    public ResponseEntity<RespuestaApi<ActivacionEscenaDTO>> activarEscena(@PathVariable Long id) {
+        ActivacionEscenaDTO data = dashboardService.activarEscena(id);
         return ResponseEntity.ok(new RespuestaApi<>(true, "Escena activada exitosamente", data));
     }
 
     @PatchMapping("/routines/{id}/pause")
-    public ResponseEntity<RespuestaApi<RutinaRespuestaDto>> pausarRutina(@PathVariable Long id) {
-        RutinaRespuestaDto data = dashboardService.pausarRutina(id);
+    public ResponseEntity<RespuestaApi<RutinaDTO>> pausarRutina(@PathVariable Long id) {
+        RutinaDTO data = dashboardService.pausarRutina(id);
         return ResponseEntity.ok(new RespuestaApi<>(true, "Rutina pausada exitosamente", data));
     }
 

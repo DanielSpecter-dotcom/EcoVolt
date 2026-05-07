@@ -1,6 +1,6 @@
 package com.ecovolt.demo.exceptions;
 
-import com.ecovolt.demo.dtos.response.RespuestaApi;
+import com.ecovolt.demo.dtos.RespuestaApi;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.AuthenticationException;

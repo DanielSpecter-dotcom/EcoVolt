@@ -1,8 +1,8 @@
 package com.ecovolt.demo.serviceimpl;
 
-import com.ecovolt.demo.dtos.request.LimiteAlertaSolicitudDto;
-import com.ecovolt.demo.dtos.response.AlertaRespuestaDto;
-import com.ecovolt.demo.dtos.response.LimiteRespuestaDto;
+import com.ecovolt.demo.dtos.LimiteAlertaSolicitudDto;
+import com.ecovolt.demo.dtos.AlertaDTO;
+import com.ecovolt.demo.dtos.LimiteRespuestaDto;
 import com.ecovolt.demo.entities.Alerta;
 import com.ecovolt.demo.entities.Historico;
 import com.ecovolt.demo.entities.DispositivoVirtual;
@@ -36,7 +36,7 @@ public class AlertaService {
     }
 
     @Transactional
-    public AlertaRespuestaDto create(Alerta request) {
+    public AlertaDTO create(Alerta request) {
         DispositivoVirtual dispositivo = findDevice(request);
 
         request.setId(null);
@@ -49,7 +49,7 @@ public class AlertaService {
     }
 
     @Transactional(readOnly = true)
-    public List<AlertaRespuestaDto> findAll() {
+    public List<AlertaDTO> findAll() {
         return alertaRepositorio.findAll()
                 .stream()
                 .map(this::convertirARespuesta)
@@ -57,7 +57,7 @@ public class AlertaService {
     }
 
     @Transactional(readOnly = true)
-    public AlertaRespuestaDto findById(Long id) {
+    public AlertaDTO findById(Long id) {
         return convertirARespuesta(findAlert(id));
     }
 
@@ -72,7 +72,7 @@ public class AlertaService {
     }
 
     @Transactional(readOnly = true)
-    public List<AlertaRespuestaDto> obtenerHistorial(Long usuarioId) {
+    public List<AlertaDTO> obtenerHistorial(Long usuarioId) {
         return alertaRepositorio.findByDispositivoHabitacionCasaUsuarioIdOrderByFechaCreacionDesc(usuarioId)
                 .stream()
                 .map(this::convertirARespuesta)
@@ -80,9 +80,9 @@ public class AlertaService {
     }
 
     @Transactional(readOnly = true)
-    public List<AlertaRespuestaDto> filtrarAlertas(Long usuarioId, Long dispositivoId, LocalDate desde, LocalDate hasta) {
+    public List<AlertaDTO> filtrarAlertas(Long usuarioId, Long dispositivoId, LocalDate desde, LocalDate hasta) {
         List<Alerta> alertas = alertaRepositorio.findByDispositivoHabitacionCasaUsuarioIdOrderByFechaCreacionDesc(usuarioId);
-        List<AlertaRespuestaDto> respuesta = new ArrayList<>();
+        List<AlertaDTO> respuesta = new ArrayList<>();
 
         for (Alerta alerta : alertas) {
             boolean valido = true;
@@ -110,7 +110,7 @@ public class AlertaService {
     }
 
     @Transactional
-    public AlertaRespuestaDto marcarComoLeida(Long alertaId, Long usuarioId) {
+    public AlertaDTO marcarComoLeida(Long alertaId, Long usuarioId) {
         Alerta alerta = alertaRepositorio.findByIdAndDispositivoHabitacionCasaUsuarioId(alertaId, usuarioId)
                 .orElseThrow(() -> new ResourceNotFoundException("Alerta no encontrada"));
 
@@ -119,7 +119,7 @@ public class AlertaService {
     }
 
     @Transactional
-    public AlertaRespuestaDto update(Long id, Alerta request) {
+    public AlertaDTO update(Long id, Alerta request) {
         Alerta alerta = findAlert(id);
         DispositivoVirtual dispositivo = findDevice(request);
 
@@ -190,10 +190,10 @@ public class AlertaService {
                 .orElseThrow(() -> new ResourceNotFoundException("Dispositivo no encontrado"));
     }
 
-    private AlertaRespuestaDto convertirARespuesta(Alerta alerta) {
+    private AlertaDTO convertirARespuesta(Alerta alerta) {
         DispositivoVirtual dispositivo = alerta.getDispositivo();
 
-        return AlertaRespuestaDto.builder()
+        return AlertaDTO.builder()
                 .id(alerta.getId())
                 .tipo(alerta.getTipo())
                 .mensaje(alerta.getMensaje())

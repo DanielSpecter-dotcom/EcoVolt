@@ -1,10 +1,9 @@
 package com.ecovolt.demo.serviceimpl;
 
-import com.ecovolt.demo.dtos.request.EstadoDeseadoDispositivoDto;
-import com.ecovolt.demo.dtos.request.CrearEscenaDto;
-import com.ecovolt.demo.dtos.response.EstadoDispositivoRespuestaDto;
-import com.ecovolt.demo.dtos.response.ActivacionEscenaRespuestaDto;
-import com.ecovolt.demo.dtos.response.EscenaRespuestaDto;
+import com.ecovolt.demo.dtos.EstadoDeseadoDispositivoDto;
+import com.ecovolt.demo.dtos.CrearEscenaDto;
+import com.ecovolt.demo.dtos.ActivacionEscenaDTO;
+import com.ecovolt.demo.dtos.EscenaDTO;
 import com.ecovolt.demo.exceptions.ResourceNotFoundException;
 import com.ecovolt.demo.services.SceneService;
 import org.springframework.stereotype.Service;
@@ -21,12 +20,12 @@ import java.util.concurrent.atomic.AtomicLong;
 public class EscenaMemoriaService implements SceneService {
 
     private final AtomicLong sequence = new AtomicLong(1);
-    private final Map<Long, EscenaRespuestaDto> scenes = new ConcurrentHashMap<>();
+    private final Map<Long, EscenaDTO> scenes = new ConcurrentHashMap<>();
 
     @Override
-    public EscenaRespuestaDto create(CrearEscenaDto request) {
+    public EscenaDTO create(CrearEscenaDto request) {
         Long sceneId = sequence.getAndIncrement();
-        EscenaRespuestaDto response = EscenaRespuestaDto.builder()
+        EscenaDTO response = EscenaDTO.builder()
                 .id(sceneId)
                 .name(request.getNombre())
                 .devices(mapDeviceStates(request.getDispostivos()))
@@ -37,8 +36,8 @@ public class EscenaMemoriaService implements SceneService {
     }
 
     @Override
-    public ActivacionEscenaRespuestaDto activate(Long sceneId) {
-        EscenaRespuestaDto scene = scenes.get(sceneId);
+    public ActivacionEscenaDTO activate(Long sceneId) {
+        EscenaDTO scene = scenes.get(sceneId);
         if (scene == null) {
             throw new ResourceNotFoundException("Escena no encontrada");
         }
@@ -48,7 +47,7 @@ public class EscenaMemoriaService implements SceneService {
          * desde la base de datos y enviar cada comando al servicio de dispositivos
          * para cambiar su estado de forma transaccional o compensable.
          */
-        return ActivacionEscenaRespuestaDto.builder()
+        return ActivacionEscenaDTO.builder()
                 .sceneId(scene.getId())
                 .activatedAt(LocalDateTime.now())
                 .appliedDevices(scene.getDevices())
@@ -57,21 +56,21 @@ public class EscenaMemoriaService implements SceneService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<EscenaRespuestaDto> findAll() {
+    public List<EscenaDTO> findAll() {
         return scenes.values().stream()
-                .sorted(java.util.Comparator.comparing(EscenaRespuestaDto::getId))
+                .sorted(java.util.Comparator.comparing(EscenaDTO::getId))
                 .toList();
     }
 
     @Override
     @Transactional(readOnly = true)
-    public EscenaRespuestaDto findById(Long sceneId) {
+    public EscenaDTO findById(Long sceneId) {
         return findScene(sceneId);
     }
 
     @Override
-    public EscenaRespuestaDto update(Long sceneId, CrearEscenaDto request) {
-        EscenaRespuestaDto scene = findScene(sceneId);
+    public EscenaDTO update(Long sceneId, CrearEscenaDto request) {
+        EscenaDTO scene = findScene(sceneId);
         scene.setName(request.getNombre());
         scene.setDevices(mapDeviceStates(request.getDispostivos()));
         scenes.put(sceneId, scene);
@@ -85,17 +84,17 @@ public class EscenaMemoriaService implements SceneService {
         }
     }
 
-    private List<EstadoDispositivoRespuestaDto> mapDeviceStates(List<EstadoDeseadoDispositivoDto> devices) {
+    private List<EstadoDeseadoDispositivoDto> mapDeviceStates(List<EstadoDeseadoDispositivoDto> devices) {
         return devices.stream()
-                .map(device -> EstadoDispositivoRespuestaDto.builder()
+                .map(device -> EstadoDeseadoDispositivoDto.builder()
                         .deviceId(device.getDeviceId())
                         .desiredOn(device.getDesiredOn())
                         .build())
                 .toList();
     }
 
-    private EscenaRespuestaDto findScene(Long sceneId) {
-        EscenaRespuestaDto scene = scenes.get(sceneId);
+    private EscenaDTO findScene(Long sceneId) {
+        EscenaDTO scene = scenes.get(sceneId);
         if (scene == null) {
             throw new ResourceNotFoundException("Escena no encontrada");
         }

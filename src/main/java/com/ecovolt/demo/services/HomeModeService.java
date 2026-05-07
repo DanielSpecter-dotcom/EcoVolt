@@ -1,21 +1,21 @@
 package com.ecovolt.demo.services;
 
-import com.ecovolt.demo.dtos.request.ModoAusenteDto;
-import com.ecovolt.demo.dtos.response.CasaRespuestaDto;
-import com.ecovolt.demo.dtos.response.ModoAusenteRespuestaDto;
+import com.ecovolt.demo.dtos.ModoAusenteDto;
+import com.ecovolt.demo.dtos.CasaDTO;
+import com.ecovolt.demo.dtos.ModoAusenteRespuestaDto;
 import com.ecovolt.demo.entities.Casa;
 
 import java.util.List;
 
 public interface HomeModeService {
 
-    CasaRespuestaDto create(Casa request);
+    CasaDTO create(Casa request);
 
-    List<CasaRespuestaDto> findAll();
+    List<CasaDTO> findAll();
 
-    CasaRespuestaDto findById(Long id);
+    CasaDTO findById(Long id);
 
-    CasaRespuestaDto update(Long id, Casa request);
+    CasaDTO update(Long id, Casa request);
 
     void delete(Long id);
 

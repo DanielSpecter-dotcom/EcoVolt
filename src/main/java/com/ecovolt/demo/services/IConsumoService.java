@@ -1,26 +1,26 @@
 package com.ecovolt.demo.services;
 
-import com.ecovolt.demo.dtos.response.ComparacionConsumoRespuestaDto;
-import com.ecovolt.demo.dtos.response.ConsumoRespuestaDto;
-import com.ecovolt.demo.dtos.response.HistoricoRespuestaDto;
-import com.ecovolt.demo.dtos.response.ConsumoHabitacionRespuestaDto;
+import com.ecovolt.demo.dtos.ComparacionConsumoRespuestaDto;
+import com.ecovolt.demo.dtos.ConsumoRespuestaDto;
+import com.ecovolt.demo.dtos.HistoricoDTO;
+import com.ecovolt.demo.dtos.ConsumoHabitacionDTO;
 import com.ecovolt.demo.entities.Historico;
 
 import java.util.List;
 
 public interface IConsumoService {
 
-    HistoricoRespuestaDto create(Historico request);
+    HistoricoDTO create(Historico request);
 
-    List<HistoricoRespuestaDto> findAll();
+    List<HistoricoDTO> findAll();
 
-    HistoricoRespuestaDto findById(Long id);
+    HistoricoDTO findById(Long id);
 
-    HistoricoRespuestaDto update(Long id, Historico request);
+    HistoricoDTO update(Long id, Historico request);
 
     void delete(Long id);
 
-    ConsumoHabitacionRespuestaDto obtenerConsumoHabitacion(Long habitacionId, Long usuarioId);
+    ConsumoHabitacionDTO obtenerConsumoHabitacion(Long habitacionId, Long usuarioId);
 
     ComparacionConsumoRespuestaDto compararConsumo(Long usuarioId);
 

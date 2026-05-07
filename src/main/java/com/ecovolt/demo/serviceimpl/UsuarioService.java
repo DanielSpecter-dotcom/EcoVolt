@@ -1,9 +1,9 @@
 package com.ecovolt.demo.serviceimpl;
 
-import com.ecovolt.demo.dtos.request.ConfiguracionNotificacionesDto;
-import com.ecovolt.demo.dtos.request.ActualizarContrasenaDto;
-import com.ecovolt.demo.dtos.request.ActualizarPerfilUsuarioDto;
-import com.ecovolt.demo.dtos.response.UsuarioRespuestaDto;
+import com.ecovolt.demo.dtos.ConfiguracionNotificacionesDto;
+import com.ecovolt.demo.dtos.ActualizarContrasenaDto;
+import com.ecovolt.demo.dtos.ActualizarPerfilUsuarioDto;
+import com.ecovolt.demo.dtos.UsuarioDTO;
 import com.ecovolt.demo.entities.Rol;
 import com.ecovolt.demo.entities.Usuario;
 import com.ecovolt.demo.exceptions.BadRequestException;
@@ -36,34 +36,34 @@ public class UsuarioService {
     }
 
     @Transactional
-    public UsuarioRespuestaDto create(Usuario request) {
+    public UsuarioDTO create(Usuario request) {
         if (request.getContrasena() != null) {
             request.setContrasena(passwordEncoder.encode(request.getContrasena()));
         }
-        return modelMapper.map(usuarioRepositorio.save(request), UsuarioRespuestaDto.class);
+        return modelMapper.map(usuarioRepositorio.save(request), UsuarioDTO.class);
     }
 
     @Transactional(readOnly = true)
-    public List<UsuarioRespuestaDto> findAll() {
+    public List<UsuarioDTO> findAll() {
         return usuarioRepositorio.findAll()
                 .stream()
-                .map(usuario -> modelMapper.map(usuario, UsuarioRespuestaDto.class))
+                .map(usuario -> modelMapper.map(usuario, UsuarioDTO.class))
                 .toList();
     }
 
     @Transactional(readOnly = true)
-    public UsuarioRespuestaDto findById(Long id) {
-        return modelMapper.map(findUser(id), UsuarioRespuestaDto.class);
+    public UsuarioDTO findById(Long id) {
+        return modelMapper.map(findUser(id), UsuarioDTO.class);
     }
 
     @Transactional
-    public UsuarioRespuestaDto updateProfile(Long id, ActualizarPerfilUsuarioDto request) {
+    public UsuarioDTO updateProfile(Long id, ActualizarPerfilUsuarioDto request) {
         Usuario usuario = findUser(id);
 
         modelMapper.map(request, usuario);
         usuario.setNombre(usuario.getNombre().trim());
 
-        return modelMapper.map(usuarioRepositorio.save(usuario), UsuarioRespuestaDto.class);
+        return modelMapper.map(usuarioRepositorio.save(usuario), UsuarioDTO.class);
     }
 
     @Transactional
@@ -114,12 +114,12 @@ public class UsuarioService {
     }
 
     @Transactional
-    public UsuarioRespuestaDto updateNotificationSettings(Long id, ConfiguracionNotificacionesDto request) {
+    public UsuarioDTO updateNotificationSettings(Long id, ConfiguracionNotificacionesDto request) {
         Usuario usuario = findUser(id);
 
         modelMapper.map(request, usuario);
 
-        return modelMapper.map(usuarioRepositorio.save(usuario), UsuarioRespuestaDto.class);
+        return modelMapper.map(usuarioRepositorio.save(usuario), UsuarioDTO.class);
     }
 
     private Usuario findUser(Long id) {

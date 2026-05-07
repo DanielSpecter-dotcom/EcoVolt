@@ -2,8 +2,8 @@ package com.ecovolt.demo.controllers;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
-import com.ecovolt.demo.dtos.response.RespuestaApi;
-import com.ecovolt.demo.dtos.response.ReporteRespuestaDto;
+import com.ecovolt.demo.dtos.RespuestaApi;
+import com.ecovolt.demo.dtos.ReporteRespuestaDto;
 import com.ecovolt.demo.security.CustomUserDetails;
 import com.ecovolt.demo.serviceimpl.ReporteService;
 import org.springframework.http.HttpHeaders;

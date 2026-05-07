@@ -1,8 +1,8 @@
 package com.ecovolt.demo.serviceimpl;
 
-import com.ecovolt.demo.dtos.request.ModoAusenteDto;
-import com.ecovolt.demo.dtos.response.CasaRespuestaDto;
-import com.ecovolt.demo.dtos.response.ModoAusenteRespuestaDto;
+import com.ecovolt.demo.dtos.ModoAusenteDto;
+import com.ecovolt.demo.dtos.CasaDTO;
+import com.ecovolt.demo.dtos.ModoAusenteRespuestaDto;
 import com.ecovolt.demo.entities.Casa;
 import com.ecovolt.demo.entities.Usuario;
 import com.ecovolt.demo.exceptions.ResourceNotFoundException;
@@ -31,7 +31,7 @@ public class ModoCasaService implements HomeModeService {
         this.usuarioRepositorio = usuarioRepositorio;
     }
 
-    public CasaRespuestaDto create(Casa request) {
+    public CasaDTO create(Casa request) {
         Usuario usuario = usuarioRepositorio.findById(request.getUsuario().getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
 
@@ -41,7 +41,7 @@ public class ModoCasaService implements HomeModeService {
     }
 
     @Transactional(readOnly = true)
-    public List<CasaRespuestaDto> findAll() {
+    public List<CasaDTO> findAll() {
         return casaRepositorio.findAll()
                 .stream()
                 .map(this::toHomeResponse)
@@ -49,11 +49,11 @@ public class ModoCasaService implements HomeModeService {
     }
 
     @Transactional(readOnly = true)
-    public CasaRespuestaDto findById(Long id) {
+    public CasaDTO findById(Long id) {
         return toHomeResponse(findHome(id));
     }
 
-    public CasaRespuestaDto update(Long id, Casa request) {
+    public CasaDTO update(Long id, Casa request) {
         Casa casa = findHome(id);
         casa.setNombre(request.getNombre());
         return toHomeResponse(casaRepositorio.save(casa));
@@ -81,8 +81,8 @@ public class ModoCasaService implements HomeModeService {
                 .orElseThrow(() -> new ResourceNotFoundException("Casa no encontrada"));
     }
 
-    private CasaRespuestaDto toHomeResponse(Casa casa) {
-        return CasaRespuestaDto.builder()
+    private CasaDTO toHomeResponse(Casa casa) {
+        return CasaDTO.builder()
                 .id(casa.getId())
                 .nombre(casa.getNombre())
                 .usuarioId(casa.getUsuario().getId())

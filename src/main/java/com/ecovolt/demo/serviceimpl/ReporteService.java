@@ -1,7 +1,7 @@
 package com.ecovolt.demo.serviceimpl;
 
-import com.ecovolt.demo.dtos.response.ItemComparacionConsumoDto;
-import com.ecovolt.demo.dtos.response.ReporteRespuestaDto;
+import com.ecovolt.demo.dtos.ItemComparacionConsumoDto;
+import com.ecovolt.demo.dtos.ReporteRespuestaDto;
 import com.ecovolt.demo.entities.Historico;
 import com.ecovolt.demo.entities.DispositivoVirtual;
 import com.ecovolt.demo.repositories.AlertaRepositorio;

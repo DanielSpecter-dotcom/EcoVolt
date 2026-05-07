@@ -1,9 +1,9 @@
 package com.ecovolt.demo.serviceimpl;
 
-import com.ecovolt.demo.dtos.request.CrearRutinaDto;
-import com.ecovolt.demo.dtos.request.ActualizarRutinaDto;
-import com.ecovolt.demo.dtos.response.AccionDispositivoRutinaRespuestaDto;
-import com.ecovolt.demo.dtos.response.RutinaRespuestaDto;
+import com.ecovolt.demo.dtos.CrearRutinaDto;
+import com.ecovolt.demo.dtos.ActualizarRutinaDto;
+import com.ecovolt.demo.dtos.AccionRutinaDTO;
+import com.ecovolt.demo.dtos.RutinaDTO;
 import com.ecovolt.demo.exceptions.ResourceNotFoundException;
 import com.ecovolt.demo.services.RoutineService;
 import org.springframework.stereotype.Service;
@@ -20,18 +20,18 @@ import java.util.concurrent.atomic.AtomicLong;
 public class RutinaMemoriaService implements RoutineService {
 
     private final AtomicLong sequence = new AtomicLong(1);
-    private final Map<Long, RutinaRespuestaDto> routines = new ConcurrentHashMap<>();
+    private final Map<Long, RutinaDTO> routines = new ConcurrentHashMap<>();
 
     @Override
-    public RutinaRespuestaDto create(CrearRutinaDto request) {
-        RutinaRespuestaDto response = RutinaRespuestaDto.builder()
+    public RutinaDTO create(CrearRutinaDto request) {
+        RutinaDTO response = RutinaDTO.builder()
                 .id(sequence.getAndIncrement())
                 .homeId(request.getHomeId())
                 .name(request.getNombre())
                 .executionTime(request.getTiempoEjecucion())
                 .daysOfWeek(new LinkedHashSet<>(request.getDiasSemana()))
                 .actions(request.getAcciones().stream()
-                        .map(action -> AccionDispositivoRutinaRespuestaDto.builder()
+                        .map(action -> AccionRutinaDTO.builder()
                                 .deviceId(action.getDeviceId())
                                 .turnOn(action.getEncendido())
                                 .build())
@@ -46,21 +46,21 @@ public class RutinaMemoriaService implements RoutineService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<RutinaRespuestaDto> findAll() {
+    public List<RutinaDTO> findAll() {
         return routines.values().stream()
-                .sorted(java.util.Comparator.comparing(RutinaRespuestaDto::getId))
+                .sorted(java.util.Comparator.comparing(RutinaDTO::getId))
                 .toList();
     }
 
     @Override
     @Transactional(readOnly = true)
-    public RutinaRespuestaDto findById(Long routineId) {
+    public RutinaDTO findById(Long routineId) {
         return findRoutine(routineId);
     }
 
     @Override
-    public RutinaRespuestaDto update(Long routineId, ActualizarRutinaDto request) {
-        RutinaRespuestaDto routine = findRoutine(routineId);
+    public RutinaDTO update(Long routineId, ActualizarRutinaDto request) {
+        RutinaDTO routine = findRoutine(routineId);
 
         /*
          * La implementacion productiva debe persistir cambios parciales:
@@ -81,7 +81,7 @@ public class RutinaMemoriaService implements RoutineService {
         }
         if (request.getAcciones() != null) {
             routine.setActions(request.getAcciones().stream()
-                    .map(action -> AccionDispositivoRutinaRespuestaDto.builder()
+                    .map(action -> AccionRutinaDTO.builder()
                             .deviceId(action.getDeviceId())
                             .turnOn(action.getEncendido())
                             .build())
@@ -110,7 +110,7 @@ public class RutinaMemoriaService implements RoutineService {
          * desactivarlo se liberan para que el scheduler vuelva a evaluarlas.
          */
         int updated = 0;
-        for (RutinaRespuestaDto routine : routines.values()) {
+        for (RutinaDTO routine : routines.values()) {
             if (homeId.equals(routine.getHomeId())) {
                 routine.setPausedByAwayMode(awayModeEnabled);
                 updated++;
@@ -119,8 +119,8 @@ public class RutinaMemoriaService implements RoutineService {
         return updated;
     }
 
-    private RutinaRespuestaDto findRoutine(Long routineId) {
-        RutinaRespuestaDto routine = routines.get(routineId);
+    private RutinaDTO findRoutine(Long routineId) {
+        RutinaDTO routine = routines.get(routineId);
         if (routine == null) {
             throw new ResourceNotFoundException("Rutina no encontrada");
         }
