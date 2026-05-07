@@ -1,14 +1,14 @@
 package com.ecovolt.demo.serviceimpl;
 
-import com.ecovolt.demo.dtos.request.RoutineUpdateRequestDto;
-import com.ecovolt.demo.dtos.response.ActividadDashboardDto;
-import com.ecovolt.demo.dtos.response.DispositivoDashboardDto;
-import com.ecovolt.demo.dtos.response.EscenaRutinaDashboardDto;
-import com.ecovolt.demo.dtos.response.EscenasRutinasDashboardDto;
-import com.ecovolt.demo.dtos.response.ResumenDashboardDto;
-import com.ecovolt.demo.dtos.response.RoutineResponseDto;
-import com.ecovolt.demo.dtos.response.SceneActivationResponseDto;
-import com.ecovolt.demo.dtos.response.SceneResponseDto;
+import com.ecovolt.demo.dtos.request.ActualizarRutinaDto;
+import com.ecovolt.demo.dtos.response.ActividadPanelDto;
+import com.ecovolt.demo.dtos.response.DispositivoPanelDto;
+import com.ecovolt.demo.dtos.response.EscenaRutinaPanelDto;
+import com.ecovolt.demo.dtos.response.EscenasRutinasPanelDto;
+import com.ecovolt.demo.dtos.response.ResumenPanelDto;
+import com.ecovolt.demo.dtos.response.RutinaRespuestaDto;
+import com.ecovolt.demo.dtos.response.ActivacionEscenaRespuestaDto;
+import com.ecovolt.demo.dtos.response.EscenaRespuestaDto;
 import com.ecovolt.demo.entities.Alerta;
 import com.ecovolt.demo.entities.DispositivoVirtual;
 import com.ecovolt.demo.entities.Historico;
@@ -17,7 +17,6 @@ import com.ecovolt.demo.repositories.DispositivoVirtualRepositorio;
 import com.ecovolt.demo.repositories.HistoricoRepositorio;
 import com.ecovolt.demo.services.RoutineService;
 import com.ecovolt.demo.services.SceneService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,23 +30,26 @@ public class DashboardService {
 
     private static final double COSTO_KWH_SOLES = 0.65;
 
-    @Autowired
-    private HistoricoRepositorio historicoRepositorio;
+    private final HistoricoRepositorio historicoRepositorio;
+    private final DispositivoVirtualRepositorio dispositivoVirtualRepositorio;
+    private final AlertaRepositorio alertaRepositorio;
+    private final SceneService escenaService;
+    private final RoutineService rutinaService;
 
-    @Autowired
-    private DispositivoVirtualRepositorio dispositivoVirtualRepositorio;
-
-    @Autowired
-    private AlertaRepositorio alertaRepositorio;
-
-    @Autowired
-    private SceneService escenaService;
-
-    @Autowired
-    private RoutineService rutinaService;
+    public DashboardService(HistoricoRepositorio historicoRepositorio,
+                            DispositivoVirtualRepositorio dispositivoVirtualRepositorio,
+                            AlertaRepositorio alertaRepositorio,
+                            SceneService escenaService,
+                            RoutineService rutinaService) {
+        this.historicoRepositorio = historicoRepositorio;
+        this.dispositivoVirtualRepositorio = dispositivoVirtualRepositorio;
+        this.alertaRepositorio = alertaRepositorio;
+        this.escenaService = escenaService;
+        this.rutinaService = rutinaService;
+    }
 
     @Transactional(readOnly = true)
-    public ResumenDashboardDto obtenerResumen(Long usuarioId) {
+    public ResumenPanelDto obtenerResumen(Long usuarioId) {
         List<Historico> historial = historicoRepositorio
                 .findByDispositivoHabitacionCasaUsuarioIdOrderByFechaRegistroDesc(usuarioId);
 
@@ -79,7 +81,7 @@ public class DashboardService {
         double variacion = calcularVariacion(consumoMensual, consumoMesAnterior);
         double costo = consumoMensual * COSTO_KWH_SOLES;
 
-        return new ResumenDashboardDto(
+        return new ResumenPanelDto(
                 redondear(consumoDiario),
                 redondear(consumoMensual),
                 redondear(costo),
@@ -88,16 +90,16 @@ public class DashboardService {
     }
 
     @Transactional(readOnly = true)
-    public List<DispositivoDashboardDto> obtenerDispositivos(Long usuarioId) {
+    public List<DispositivoPanelDto> obtenerDispositivos(Long usuarioId) {
         List<DispositivoVirtual> dispositivos = dispositivoVirtualRepositorio.findByHabitacionCasaUsuarioId(usuarioId);
-        List<DispositivoDashboardDto> respuesta = new ArrayList<>();
+        List<DispositivoPanelDto> respuesta = new ArrayList<>();
 
         for (DispositivoVirtual dispositivo : dispositivos) {
             if (!dispositivo.isEliminado()) {
                 String estado = dispositivo.isActivo() ? "encendido" : "apagado";
                 String ubicacion = dispositivo.getHabitacion() == null ? "Sin habitacion" : dispositivo.getHabitacion().getNombre();
 
-                respuesta.add(new DispositivoDashboardDto(
+                respuesta.add(new DispositivoPanelDto(
                         dispositivo.getId(),
                         dispositivo.getNombre(),
                         dispositivo.getTipo(),
@@ -111,12 +113,12 @@ public class DashboardService {
         return respuesta;
     }
 
-    public EscenasRutinasDashboardDto obtenerEscenasRutinas() {
-        List<EscenaRutinaDashboardDto> escenas = new ArrayList<>();
-        List<EscenaRutinaDashboardDto> rutinas = new ArrayList<>();
+    public EscenasRutinasPanelDto obtenerEscenasRutinas() {
+        List<EscenaRutinaPanelDto> escenas = new ArrayList<>();
+        List<EscenaRutinaPanelDto> rutinas = new ArrayList<>();
 
-        for (SceneResponseDto escena : escenaService.findAll()) {
-            escenas.add(new EscenaRutinaDashboardDto(
+        for (EscenaRespuestaDto escena : escenaService.findAll()) {
+            escenas.add(new EscenaRutinaPanelDto(
                     escena.getId(),
                     escena.getName(),
                     "escena",
@@ -124,9 +126,9 @@ public class DashboardService {
             ));
         }
 
-        for (RoutineResponseDto rutina : rutinaService.findAll()) {
+        for (RutinaRespuestaDto rutina : rutinaService.findAll()) {
             String estado = obtenerEstadoRutina(rutina);
-            rutinas.add(new EscenaRutinaDashboardDto(
+            rutinas.add(new EscenaRutinaPanelDto(
                     rutina.getId(),
                     rutina.getName(),
                     "rutina",
@@ -134,22 +136,22 @@ public class DashboardService {
             ));
         }
 
-        return new EscenasRutinasDashboardDto(escenas, rutinas);
+        return new EscenasRutinasPanelDto(escenas, rutinas);
     }
 
-    public SceneActivationResponseDto activarEscena(Long escenaId) {
+    public ActivacionEscenaRespuestaDto activarEscena(Long escenaId) {
         return escenaService.activate(escenaId);
     }
 
-    public RoutineResponseDto pausarRutina(Long rutinaId) {
-        RoutineUpdateRequestDto request = new RoutineUpdateRequestDto();
+    public RutinaRespuestaDto pausarRutina(Long rutinaId) {
+        ActualizarRutinaDto request = new ActualizarRutinaDto();
         request.setHabilitar(false);
         return rutinaService.update(rutinaId, request);
     }
 
     @Transactional(readOnly = true)
-    public List<ActividadDashboardDto> obtenerActividad(Long usuarioId) {
-        List<ActividadDashboardDto> actividades = new ArrayList<>();
+    public List<ActividadPanelDto> obtenerActividad(Long usuarioId) {
+        List<ActividadPanelDto> actividades = new ArrayList<>();
 
         List<Historico> historial = historicoRepositorio
                 .findByDispositivoHabitacionCasaUsuarioIdOrderByFechaRegistroDesc(usuarioId);
@@ -158,15 +160,15 @@ public class DashboardService {
             String nombre = dispositivo.getNombre();
             String tipo = dispositivo.isAutomatico() ? "automatica" : "manual";
             String descripcion = "Consumo registrado en " + nombre + ": " + redondear(registro.getKwhConsumidos()) + " kWh";
-            actividades.add(new ActividadDashboardDto(registro.getFechaRegistro(), descripcion, tipo));
+            actividades.add(new ActividadPanelDto(registro.getFechaRegistro(), descripcion, tipo));
         }
 
         List<Alerta> alertas = alertaRepositorio.findByDispositivoHabitacionCasaUsuarioIdOrderByFechaCreacionDesc(usuarioId);
         for (Alerta alerta : alertas) {
-            actividades.add(new ActividadDashboardDto(alerta.getFechaCreacion(), alerta.getMensaje(), "alerta"));
+            actividades.add(new ActividadPanelDto(alerta.getFechaCreacion(), alerta.getMensaje(), "alerta"));
         }
 
-        actividades.sort(Comparator.comparing(ActividadDashboardDto::getHora).reversed());
+        actividades.sort(Comparator.comparing(ActividadPanelDto::getHora).reversed());
 
         if (actividades.size() > 10) {
             return actividades.subList(0, 10);
@@ -174,7 +176,7 @@ public class DashboardService {
         return actividades;
     }
 
-    private String obtenerEstadoRutina(RoutineResponseDto rutina) {
+    private String obtenerEstadoRutina(RutinaRespuestaDto rutina) {
         if (Boolean.TRUE.equals(rutina.getPausedByAwayMode())) {
             return "pausada";
         }

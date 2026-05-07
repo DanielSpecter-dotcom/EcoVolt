@@ -2,13 +2,13 @@ package com.ecovolt.demo.controllers;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
-import com.ecovolt.demo.dtos.request.DeviceCreateDto;
-import com.ecovolt.demo.dtos.request.DeviceModeRequestDto;
-import com.ecovolt.demo.dtos.request.DeviceRoomRequestDto;
-import com.ecovolt.demo.dtos.request.DeviceStatusRequestDto;
-import com.ecovolt.demo.dtos.request.DeviceUpdateRequestDto;
-import com.ecovolt.demo.dtos.response.ApiResponse;
-import com.ecovolt.demo.dtos.response.DeviceResponseDto;
+import com.ecovolt.demo.dtos.request.CrearDispositivoDto;
+import com.ecovolt.demo.dtos.request.ModoDispositivoDto;
+import com.ecovolt.demo.dtos.request.AsignarHabitacionDispositivoDto;
+import com.ecovolt.demo.dtos.request.EstadoActualDispositivoDto;
+import com.ecovolt.demo.dtos.request.ActualizarDispositivoDto;
+import com.ecovolt.demo.dtos.response.RespuestaApi;
+import com.ecovolt.demo.dtos.response.DispositivoRespuestaDto;
 import com.ecovolt.demo.serviceimpl.DispositivoService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -38,79 +38,79 @@ public class DispositivoController {
     @Operation(summary = "Registrar un dispositivo virtual")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Dispositivo creado")
     @PostMapping
-    public ResponseEntity<ApiResponse<DeviceResponseDto>> create(@Valid @RequestBody DeviceCreateDto request) {
-        DeviceResponseDto data = dispositivoService.create(request);
+    public ResponseEntity<RespuestaApi<DispositivoRespuestaDto>> create(@Valid @RequestBody CrearDispositivoDto request) {
+        DispositivoRespuestaDto data = dispositivoService.create(request);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new ApiResponse<>(true, "Dispositivo virtual registrado exitosamente", data));
+                .body(new RespuestaApi<>(true, "Dispositivo virtual registrado exitosamente", data));
     }
 
     @Operation(summary = "Listar dispositivos", description = "Lista todos los dispositivos no eliminados con su estado actual")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Dispositivos obtenidos")
     @GetMapping
-    public ResponseEntity<ApiResponse<List<DeviceResponseDto>>> findAll() {
-        List<DeviceResponseDto> data = dispositivoService.findAll();
-        return ResponseEntity.ok(new ApiResponse<>(true, "Dispositivos obtenidos exitosamente", data));
+    public ResponseEntity<RespuestaApi<List<DispositivoRespuestaDto>>> findAll() {
+        List<DispositivoRespuestaDto> data = dispositivoService.findAll();
+        return ResponseEntity.ok(new RespuestaApi<>(true, "Dispositivos obtenidos exitosamente", data));
     }
 
     @Operation(summary = "Obtener detalle de un dispositivo")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Dispositivo obtenido")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Dispositivo no encontrado")
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<DeviceResponseDto>> findById(@PathVariable Long id) {
-        DeviceResponseDto data = dispositivoService.findById(id);
-        return ResponseEntity.ok(new ApiResponse<>(true, "Dispositivo obtenido exitosamente", data));
+    public ResponseEntity<RespuestaApi<DispositivoRespuestaDto>> findById(@PathVariable Long id) {
+        DispositivoRespuestaDto data = dispositivoService.findById(id);
+        return ResponseEntity.ok(new RespuestaApi<>(true, "Dispositivo obtenido exitosamente", data));
     }
 
     @Operation(summary = "Asignar dispositivo a un ambiente")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Ambiente asignado")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Dispositivo o ambiente no encontrado")
     @PatchMapping("/{id}/room")
-    public ResponseEntity<ApiResponse<DeviceResponseDto>> assignRoom(
+    public ResponseEntity<RespuestaApi<DispositivoRespuestaDto>> assignRoom(
             @PathVariable Long id,
-            @Valid @RequestBody DeviceRoomRequestDto request) {
-        DeviceResponseDto data = dispositivoService.assignRoom(id, request);
-        return ResponseEntity.ok(new ApiResponse<>(true, "Ambiente asignado exitosamente", data));
+            @Valid @RequestBody AsignarHabitacionDispositivoDto request) {
+        DispositivoRespuestaDto data = dispositivoService.assignRoom(id, request);
+        return ResponseEntity.ok(new RespuestaApi<>(true, "Ambiente asignado exitosamente", data));
     }
 
     @Operation(summary = "Actualizar configuracion de un dispositivo")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Dispositivo actualizado")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Dispositivo o ambiente no encontrado")
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<DeviceResponseDto>> update(
+    public ResponseEntity<RespuestaApi<DispositivoRespuestaDto>> update(
             @PathVariable Long id,
-            @Valid @RequestBody DeviceUpdateRequestDto request) {
-        DeviceResponseDto data = dispositivoService.update(id, request);
-        return ResponseEntity.ok(new ApiResponse<>(true, "Dispositivo actualizado exitosamente", data));
+            @Valid @RequestBody ActualizarDispositivoDto request) {
+        DispositivoRespuestaDto data = dispositivoService.update(id, request);
+        return ResponseEntity.ok(new RespuestaApi<>(true, "Dispositivo actualizado exitosamente", data));
     }
 
     @Operation(summary = "Eliminar dispositivo", description = "Realiza eliminacion logica para conservar los historicos en reportes")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Dispositivo eliminado")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Dispositivo no encontrado")
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long id) {
+    public ResponseEntity<RespuestaApi<Void>> delete(@PathVariable Long id) {
         dispositivoService.delete(id);
-        return ResponseEntity.ok(new ApiResponse<>(true, "Dispositivo eliminado exitosamente", null));
+        return ResponseEntity.ok(new RespuestaApi<>(true, "Dispositivo eliminado exitosamente", null));
     }
 
     @Operation(summary = "Cambiar estado de un dispositivo", description = "Permite alternar entre ON y OFF")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Estado actualizado")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Dispositivo no encontrado")
     @PatchMapping("/{id}/status")
-    public ResponseEntity<ApiResponse<DeviceResponseDto>> updateStatus(
+    public ResponseEntity<RespuestaApi<DispositivoRespuestaDto>> updateStatus(
             @PathVariable Long id,
-            @Valid @RequestBody DeviceStatusRequestDto request) {
-        DeviceResponseDto data = dispositivoService.updateStatus(id, request);
-        return ResponseEntity.ok(new ApiResponse<>(true, "Estado del dispositivo actualizado exitosamente", data));
+            @Valid @RequestBody EstadoActualDispositivoDto request) {
+        DispositivoRespuestaDto data = dispositivoService.updateStatus(id, request);
+        return ResponseEntity.ok(new RespuestaApi<>(true, "Estado del dispositivo actualizado exitosamente", data));
     }
 
     @Operation(summary = "Cambiar modo de funcionamiento", description = "Permite alternar entre AUTOMATIC y MANUAL")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Modo actualizado")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Dispositivo no encontrado")
     @PatchMapping("/{id}/mode")
-    public ResponseEntity<ApiResponse<DeviceResponseDto>> updateMode(
+    public ResponseEntity<RespuestaApi<DispositivoRespuestaDto>> updateMode(
             @PathVariable Long id,
-            @Valid @RequestBody DeviceModeRequestDto request) {
-        DeviceResponseDto data = dispositivoService.updateMode(id, request);
-        return ResponseEntity.ok(new ApiResponse<>(true, "Modo del dispositivo actualizado exitosamente", data));
+            @Valid @RequestBody ModoDispositivoDto request) {
+        DispositivoRespuestaDto data = dispositivoService.updateMode(id, request);
+        return ResponseEntity.ok(new RespuestaApi<>(true, "Modo del dispositivo actualizado exitosamente", data));
     }
 }

@@ -1,14 +1,12 @@
 package com.ecovolt.demo.serviceimpl;
 
-import org.springframework.beans.factory.annotation.Autowired;
-
-import com.ecovolt.demo.dtos.request.LoginRequestDto;
-import com.ecovolt.demo.dtos.request.RegisterRequestDto;
-import com.ecovolt.demo.dtos.request.ResendVerificationRequestDto;
-import com.ecovolt.demo.dtos.request.VerifyEmailRequestDto;
-import com.ecovolt.demo.dtos.response.LoginResponseDto;
-import com.ecovolt.demo.dtos.response.ReniecResponse;
-import com.ecovolt.demo.dtos.response.VerificationSentResponseDto;
+import com.ecovolt.demo.dtos.request.InicioSesionSolicitudDto;
+import com.ecovolt.demo.dtos.request.RegistroUsuarioDto;
+import com.ecovolt.demo.dtos.request.ReenviarVerificacionDto;
+import com.ecovolt.demo.dtos.request.VerificarCorreoDto;
+import com.ecovolt.demo.dtos.response.InicioSesionRespuestaDto;
+import com.ecovolt.demo.dtos.response.ReniecRespuesta;
+import com.ecovolt.demo.dtos.response.VerificacionEnviadaRespuestaDto;
 import com.ecovolt.demo.entities.Casa;
 import com.ecovolt.demo.entities.Habitacion;
 import com.ecovolt.demo.entities.Historico;
@@ -45,33 +43,46 @@ public class AutenticacionService {
 
     private static final int TOKEN_EXPIRATION_HOURS = 24;
     private static final long VERIFICATION_TOKEN_EXPIRATION_MILLIS = TOKEN_EXPIRATION_HOURS * 60L * 60L * 1000L;
-    @Autowired
-    private UsuarioRepositorio usuarioRepositorio;
-    @Autowired
-    private RolRepositorio rolRepositorio;
-    @Autowired
-    private CasaRepositorio casaRepositorio;
-    @Autowired
-    private HabitacionRepositorio habitacionRepositorio;
-    @Autowired
-    private DispositivoVirtualRepositorio dispositivoVirtualRepositorio;
-    @Autowired
-    private HistoricoRepositorio historicoRepositorio;
-    @Autowired
-    private ReniecClient reniecClient;
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-    @Autowired
-    private AuthenticationManager authenticationManager;
-    @Autowired
-    private JwtService jwtService;
-    @Autowired
-    private ModelMapper modelMapper;
+    private final UsuarioRepositorio usuarioRepositorio;
+    private final RolRepositorio rolRepositorio;
+    private final CasaRepositorio casaRepositorio;
+    private final HabitacionRepositorio habitacionRepositorio;
+    private final DispositivoVirtualRepositorio dispositivoVirtualRepositorio;
+    private final HistoricoRepositorio historicoRepositorio;
+    private final ReniecClient reniecClient;
+    private final PasswordEncoder passwordEncoder;
+    private final AuthenticationManager authenticationManager;
+    private final JwtService jwtService;
+    private final ModelMapper modelMapper;
 
     @Value("${api.token}")
     private String apiToken;
 
-    public LoginResponseDto login(LoginRequestDto request) {
+    public AutenticacionService(UsuarioRepositorio usuarioRepositorio,
+                                RolRepositorio rolRepositorio,
+                                CasaRepositorio casaRepositorio,
+                                HabitacionRepositorio habitacionRepositorio,
+                                DispositivoVirtualRepositorio dispositivoVirtualRepositorio,
+                                HistoricoRepositorio historicoRepositorio,
+                                ReniecClient reniecClient,
+                                PasswordEncoder passwordEncoder,
+                                AuthenticationManager authenticationManager,
+                                JwtService jwtService,
+                                ModelMapper modelMapper) {
+        this.usuarioRepositorio = usuarioRepositorio;
+        this.rolRepositorio = rolRepositorio;
+        this.casaRepositorio = casaRepositorio;
+        this.habitacionRepositorio = habitacionRepositorio;
+        this.dispositivoVirtualRepositorio = dispositivoVirtualRepositorio;
+        this.historicoRepositorio = historicoRepositorio;
+        this.reniecClient = reniecClient;
+        this.passwordEncoder = passwordEncoder;
+        this.authenticationManager = authenticationManager;
+        this.jwtService = jwtService;
+        this.modelMapper = modelMapper;
+    }
+
+    public InicioSesionRespuestaDto login(InicioSesionSolicitudDto request) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         normalizeEmail(request.getCorreo()),
@@ -79,11 +90,11 @@ public class AutenticacionService {
                 )
         );
         String token = jwtService.generateToken((UserDetails) authentication.getPrincipal());
-        return new LoginResponseDto(token, "Bearer", jwtService.getExpirationSeconds());
+        return new InicioSesionRespuestaDto(token, "Bearer", jwtService.getExpirationSeconds());
     }
 
     @Transactional
-    public VerificationSentResponseDto register(RegisterRequestDto request) {
+    public VerificacionEnviadaRespuestaDto register(RegistroUsuarioDto request) {
         String correo = normalizeEmail(request.getCorreo());
         String dni = request.getDni().trim();
 
@@ -95,7 +106,7 @@ public class AutenticacionService {
             throw new BadRequestException("El DNI ya se encuentra registrado");
         }
 
-        ReniecResponse reniecResponse = findPersonByDni(dni);
+        ReniecRespuesta reniecResponse = findPersonByDni(dni);
 
         Usuario usuario = modelMapper.map(request, Usuario.class);
         usuario.setDni(dni);
@@ -120,7 +131,7 @@ public class AutenticacionService {
     }
 
     @Transactional
-    public void verifyEmail(VerifyEmailRequestDto request) {
+    public void verifyEmail(VerificarCorreoDto request) {
         Usuario usuario = usuarioRepositorio.findByVerificationToken(request.getToken())
                 .orElseThrow(() -> new BadRequestException("El token de verificacion no es valido"));
 
@@ -135,7 +146,7 @@ public class AutenticacionService {
     }
 
     @Transactional
-    public VerificationSentResponseDto resendVerification(ResendVerificationRequestDto request) {
+    public VerificacionEnviadaRespuestaDto resendVerification(ReenviarVerificacionDto request) {
         Usuario usuario = usuarioRepositorio.findByCorreo(normalizeEmail(request.getCorreo()))
                 .orElseThrow(() -> new ResourceNotFoundException("No existe un usuario con el correo indicado"));
 
@@ -199,9 +210,9 @@ public class AutenticacionService {
                 .build();
     }
 
-    private VerificationSentResponseDto simulateVerificationEmail(Usuario usuario) {
+    private VerificacionEnviadaRespuestaDto simulateVerificationEmail(Usuario usuario) {
         String link = "/api/v1/auth/verify-email?token=" + usuario.getVerificationToken();
-        return new VerificationSentResponseDto(
+        return new VerificacionEnviadaRespuestaDto(
                 usuario.getCorreo(),
                 usuario.getVerificationToken(),
                 usuario.getVerificationTokenExpiresAt(),
@@ -236,9 +247,9 @@ public class AutenticacionService {
                         .build()));
     }
 
-    private ReniecResponse findPersonByDni(String dni) {
+    private ReniecRespuesta findPersonByDni(String dni) {
         try {
-            ReniecResponse response = reniecClient.getPersonaInfo(dni, apiToken);
+            ReniecRespuesta response = reniecClient.getPersonaInfo(dni, apiToken);
             if (response == null || response.getFirstName() == null || response.getFirstLastName() == null) {
                 throw new BadRequestException("No se encontro informacion para el DNI brindado");
             }
@@ -254,12 +265,12 @@ public class AutenticacionService {
         return correo.trim().toLowerCase();
     }
 
-    private String buildUsername(ReniecResponse response) {
+    private String buildUsername(ReniecRespuesta response) {
         String firstName = response.getFirstName().split("\\s+")[0].toLowerCase();
         return firstName + "." + response.getFirstLastName().toLowerCase();
     }
 
-    private String buildLastNames(ReniecResponse response) {
+    private String buildLastNames(ReniecRespuesta response) {
         String firstLastName = trimToNull(response.getFirstLastName());
         String secondLastName = trimToNull(response.getSecondLastName());
 

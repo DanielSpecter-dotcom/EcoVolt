@@ -1,15 +1,29 @@
 package com.ecovolt.demo.services;
 
-import com.ecovolt.demo.dtos.response.ConsumptionCompareResponseDto;
-import com.ecovolt.demo.dtos.response.ConsumptionResponseDto;
-import com.ecovolt.demo.dtos.response.RoomConsumptionResponseDto;
+import com.ecovolt.demo.dtos.response.ComparacionConsumoRespuestaDto;
+import com.ecovolt.demo.dtos.response.ConsumoRespuestaDto;
+import com.ecovolt.demo.dtos.response.HistoricoRespuestaDto;
+import com.ecovolt.demo.dtos.response.ConsumoHabitacionRespuestaDto;
+import com.ecovolt.demo.entities.Historico;
+
+import java.util.List;
 
 public interface IConsumoService {
 
-    RoomConsumptionResponseDto obtenerConsumoHabitacion(Long habitacionId, Long usuarioId);
+    HistoricoRespuestaDto create(Historico request);
 
-    ConsumptionCompareResponseDto compararConsumo(Long usuarioId);
+    List<HistoricoRespuestaDto> findAll();
+
+    HistoricoRespuestaDto findById(Long id);
+
+    HistoricoRespuestaDto update(Long id, Historico request);
+
+    void delete(Long id);
+
+    ConsumoHabitacionRespuestaDto obtenerConsumoHabitacion(Long habitacionId, Long usuarioId);
+
+    ComparacionConsumoRespuestaDto compararConsumo(Long usuarioId);
 
     // Debe consolidar lecturas historicas y exponer consumo diario, semanal y mensual.
-    ConsumptionResponseDto obtenerConsumoDispositivo(Long dispositivoId, Long usuarioId);
+    ConsumoRespuestaDto obtenerConsumoDispositivo(Long dispositivoId, Long usuarioId);
 }

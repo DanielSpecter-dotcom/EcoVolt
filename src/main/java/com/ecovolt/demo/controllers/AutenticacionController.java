@@ -2,13 +2,13 @@ package com.ecovolt.demo.controllers;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
-import com.ecovolt.demo.dtos.request.LoginRequestDto;
-import com.ecovolt.demo.dtos.request.RegisterRequestDto;
-import com.ecovolt.demo.dtos.request.ResendVerificationRequestDto;
-import com.ecovolt.demo.dtos.request.VerifyEmailRequestDto;
-import com.ecovolt.demo.dtos.response.ApiResponse;
-import com.ecovolt.demo.dtos.response.LoginResponseDto;
-import com.ecovolt.demo.dtos.response.VerificationSentResponseDto;
+import com.ecovolt.demo.dtos.request.InicioSesionSolicitudDto;
+import com.ecovolt.demo.dtos.request.RegistroUsuarioDto;
+import com.ecovolt.demo.dtos.request.ReenviarVerificacionDto;
+import com.ecovolt.demo.dtos.request.VerificarCorreoDto;
+import com.ecovolt.demo.dtos.response.RespuestaApi;
+import com.ecovolt.demo.dtos.response.InicioSesionRespuestaDto;
+import com.ecovolt.demo.dtos.response.VerificacionEnviadaRespuestaDto;
 import com.ecovolt.demo.serviceimpl.AutenticacionService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -26,29 +26,29 @@ public class AutenticacionController {
     private AutenticacionService autenticacionService;
 
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<LoginResponseDto>> login(@Valid @RequestBody LoginRequestDto request) {
-        LoginResponseDto data = autenticacionService.login(request);
-        return ResponseEntity.ok(new ApiResponse<>(true, "Autenticacion exitosa", data));
+    public ResponseEntity<RespuestaApi<InicioSesionRespuestaDto>> login(@Valid @RequestBody InicioSesionSolicitudDto request) {
+        InicioSesionRespuestaDto data = autenticacionService.login(request);
+        return ResponseEntity.ok(new RespuestaApi<>(true, "Autenticacion exitosa", data));
     }
 
     @PostMapping("/register")
-    public ResponseEntity<ApiResponse<VerificationSentResponseDto>> register(
-            @Valid @RequestBody RegisterRequestDto request) {
-        VerificationSentResponseDto data = autenticacionService.register(request);
+    public ResponseEntity<RespuestaApi<VerificacionEnviadaRespuestaDto>> register(
+            @Valid @RequestBody RegistroUsuarioDto request) {
+        VerificacionEnviadaRespuestaDto data = autenticacionService.register(request);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new ApiResponse<>(true, "Usuario registrado. Verifique su correo para activar la cuenta", data));
+                .body(new RespuestaApi<>(true, "Usuario registrado. Verifique su correo para activar la cuenta", data));
     }
 
     @PostMapping("/verify-email")
-    public ResponseEntity<ApiResponse<Void>> verifyEmail(@Valid @RequestBody VerifyEmailRequestDto request) {
+    public ResponseEntity<RespuestaApi<Void>> verifyEmail(@Valid @RequestBody VerificarCorreoDto request) {
         autenticacionService.verifyEmail(request);
-        return ResponseEntity.ok(new ApiResponse<>(true, "Cuenta activada exitosamente", null));
+        return ResponseEntity.ok(new RespuestaApi<>(true, "Cuenta activada exitosamente", null));
     }
 
     @PostMapping("/resend-verification")
-    public ResponseEntity<ApiResponse<VerificationSentResponseDto>> resendVerification(
-            @Valid @RequestBody ResendVerificationRequestDto request) {
-        VerificationSentResponseDto data = autenticacionService.resendVerification(request);
-        return ResponseEntity.ok(new ApiResponse<>(true, "Correo de verificacion reenviado", data));
+    public ResponseEntity<RespuestaApi<VerificacionEnviadaRespuestaDto>> resendVerification(
+            @Valid @RequestBody ReenviarVerificacionDto request) {
+        VerificacionEnviadaRespuestaDto data = autenticacionService.resendVerification(request);
+        return ResponseEntity.ok(new RespuestaApi<>(true, "Correo de verificacion reenviado", data));
     }
 }

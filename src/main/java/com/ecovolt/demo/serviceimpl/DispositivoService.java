@@ -1,15 +1,13 @@
 package com.ecovolt.demo.serviceimpl;
 
-import org.springframework.beans.factory.annotation.Autowired;
-
-import com.ecovolt.demo.dtos.request.DeviceCreateDto;
-import com.ecovolt.demo.dtos.request.DeviceModeRequestDto;
-import com.ecovolt.demo.dtos.request.DeviceRoomRequestDto;
-import com.ecovolt.demo.dtos.request.DeviceStatusRequestDto;
-import com.ecovolt.demo.dtos.request.DeviceUpdateRequestDto;
-import com.ecovolt.demo.dtos.request.RoomCreateRequestDto;
-import com.ecovolt.demo.dtos.response.DeviceResponseDto;
-import com.ecovolt.demo.dtos.response.RoomResponseDto;
+import com.ecovolt.demo.dtos.request.CrearDispositivoDto;
+import com.ecovolt.demo.dtos.request.ModoDispositivoDto;
+import com.ecovolt.demo.dtos.request.AsignarHabitacionDispositivoDto;
+import com.ecovolt.demo.dtos.request.EstadoActualDispositivoDto;
+import com.ecovolt.demo.dtos.request.ActualizarDispositivoDto;
+import com.ecovolt.demo.dtos.request.CrearHabitacionDto;
+import com.ecovolt.demo.dtos.response.DispositivoRespuestaDto;
+import com.ecovolt.demo.dtos.response.HabitacionRespuestaDto;
 import com.ecovolt.demo.entities.Casa;
 import com.ecovolt.demo.entities.Habitacion;
 import com.ecovolt.demo.entities.Historico;
@@ -31,21 +29,29 @@ import java.util.List;
 @Service
 public class DispositivoService {
 
-    @Autowired
-    private UsuarioRepositorio usuarioRepositorio;
-    @Autowired
-    private CasaRepositorio casaRepositorio;
-    @Autowired
-    private HabitacionRepositorio habitacionRepositorio;
-    @Autowired
-    private DispositivoVirtualRepositorio dispositivoVirtualRepositorio;
-    @Autowired
-    private HistoricoRepositorio historicoRepositorio;
-    @Autowired
-    private ModelMapper modelMapper;
+    private final UsuarioRepositorio usuarioRepositorio;
+    private final CasaRepositorio casaRepositorio;
+    private final HabitacionRepositorio habitacionRepositorio;
+    private final DispositivoVirtualRepositorio dispositivoVirtualRepositorio;
+    private final HistoricoRepositorio historicoRepositorio;
+    private final ModelMapper modelMapper;
+
+    public DispositivoService(UsuarioRepositorio usuarioRepositorio,
+                              CasaRepositorio casaRepositorio,
+                              HabitacionRepositorio habitacionRepositorio,
+                              DispositivoVirtualRepositorio dispositivoVirtualRepositorio,
+                              HistoricoRepositorio historicoRepositorio,
+                              ModelMapper modelMapper) {
+        this.usuarioRepositorio = usuarioRepositorio;
+        this.casaRepositorio = casaRepositorio;
+        this.habitacionRepositorio = habitacionRepositorio;
+        this.dispositivoVirtualRepositorio = dispositivoVirtualRepositorio;
+        this.historicoRepositorio = historicoRepositorio;
+        this.modelMapper = modelMapper;
+    }
 
     @Transactional
-    public DeviceResponseDto create(DeviceCreateDto request) {
+    public DispositivoRespuestaDto create(CrearDispositivoDto request) {
         Usuario usuario = usuarioRepositorio.findById(request.getUsuarioId())
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
 
@@ -76,7 +82,7 @@ public class DispositivoService {
     }
 
     @Transactional
-    public RoomResponseDto createRoom(RoomCreateRequestDto request) {
+    public HabitacionRespuestaDto createRoom(CrearHabitacionDto request) {
         Usuario usuario = usuarioRepositorio.findById(request.getUsuarioId())
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
 
@@ -94,8 +100,34 @@ public class DispositivoService {
         return toRoomResponse(habitacion);
     }
 
+    @Transactional(readOnly = true)
+    public List<HabitacionRespuestaDto> findAllRooms() {
+        return habitacionRepositorio.findAll()
+                .stream()
+                .map(this::toRoomResponse)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public HabitacionRespuestaDto findRoomById(Long id) {
+        return toRoomResponse(findRoom(id));
+    }
+
     @Transactional
-    public DeviceResponseDto assignRoom(Long id, DeviceRoomRequestDto request) {
+    public HabitacionRespuestaDto updateRoom(Long id, CrearHabitacionDto request) {
+        Habitacion habitacion = findRoom(id);
+        habitacion.setNombre(request.getNombre().trim());
+        return toRoomResponse(habitacionRepositorio.save(habitacion));
+    }
+
+    @Transactional
+    public void deleteRoom(Long id) {
+        Habitacion habitacion = findRoom(id);
+        habitacionRepositorio.delete(habitacion);
+    }
+
+    @Transactional
+    public DispositivoRespuestaDto assignRoom(Long id, AsignarHabitacionDispositivoDto request) {
         DispositivoVirtual dispositivo = findActiveDevice(id);
         Habitacion habitacion = findRoomInSameHome(dispositivo, request.getRoomId());
 
@@ -104,7 +136,7 @@ public class DispositivoService {
     }
 
     @Transactional
-    public DeviceResponseDto update(Long id, DeviceUpdateRequestDto request) {
+    public DispositivoRespuestaDto update(Long id, ActualizarDispositivoDto request) {
         DispositivoVirtual dispositivo = findActiveDevice(id);
         Habitacion habitacion = findRoomInSameHome(dispositivo, request.getRoomId());
         boolean powerChanged = Double.compare(dispositivo.getPotenciaWatts(), request.getPower()) != 0;
@@ -131,7 +163,7 @@ public class DispositivoService {
     }
 
     @Transactional
-    public DeviceResponseDto updateStatus(Long id, DeviceStatusRequestDto request) {
+    public DispositivoRespuestaDto updateStatus(Long id, EstadoActualDispositivoDto request) {
         DispositivoVirtual dispositivo = findActiveDevice(id);
         boolean desiredOn = "ON".equals(request.getStatus());
 
@@ -145,7 +177,7 @@ public class DispositivoService {
     }
 
     @Transactional(readOnly = true)
-    public List<DeviceResponseDto> findAll() {
+    public List<DispositivoRespuestaDto> findAll() {
         return dispositivoVirtualRepositorio.findByEliminadoFalseOrderByIdAsc()
                 .stream()
                 .map(this::toDeviceResponse)
@@ -153,12 +185,12 @@ public class DispositivoService {
     }
 
     @Transactional(readOnly = true)
-    public DeviceResponseDto findById(Long id) {
+    public DispositivoRespuestaDto findById(Long id) {
         return toDeviceResponse(findActiveDevice(id));
     }
 
     @Transactional
-    public DeviceResponseDto updateMode(Long id, DeviceModeRequestDto request) {
+    public DispositivoRespuestaDto updateMode(Long id, ModoDispositivoDto request) {
         DispositivoVirtual dispositivo = findActiveDevice(id);
         dispositivo.setAutomatico("AUTOMATIC".equals(request.getMode()));
         return toDeviceResponse(dispositivoVirtualRepositorio.save(dispositivo));
@@ -237,9 +269,14 @@ public class DispositivoService {
                 .orElseThrow(() -> new ResourceNotFoundException("Habitacion no encontrada"));
     }
 
-    private DeviceResponseDto toDeviceResponse(DispositivoVirtual dispositivo) {
+    private Habitacion findRoom(Long id) {
+        return habitacionRepositorio.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Habitacion no encontrada"));
+    }
+
+    private DispositivoRespuestaDto toDeviceResponse(DispositivoVirtual dispositivo) {
         Habitacion habitacion = dispositivo.getHabitacion();
-        return DeviceResponseDto.builder()
+        return DispositivoRespuestaDto.builder()
                 .id(dispositivo.getId())
                 .nombre(dispositivo.getNombre())
                 .tipo(dispositivo.getTipo())
@@ -251,8 +288,8 @@ public class DispositivoService {
                 .build();
     }
 
-    private RoomResponseDto toRoomResponse(Habitacion habitacion) {
-        return RoomResponseDto.builder()
+    private HabitacionRespuestaDto toRoomResponse(Habitacion habitacion) {
+        return HabitacionRespuestaDto.builder()
                 .id(habitacion.getId())
                 .name(habitacion.getNombre())
                 .homeId(habitacion.getCasa().getId())

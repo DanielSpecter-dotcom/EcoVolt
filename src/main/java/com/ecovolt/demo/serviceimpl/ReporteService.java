@@ -1,9 +1,7 @@
 package com.ecovolt.demo.serviceimpl;
 
-import org.springframework.beans.factory.annotation.Autowired;
-
-import com.ecovolt.demo.dtos.response.ConsumptionCompareItemDto;
-import com.ecovolt.demo.dtos.response.ReportResponseDto;
+import com.ecovolt.demo.dtos.response.ItemComparacionConsumoDto;
+import com.ecovolt.demo.dtos.response.ReporteRespuestaDto;
 import com.ecovolt.demo.entities.Historico;
 import com.ecovolt.demo.entities.DispositivoVirtual;
 import com.ecovolt.demo.repositories.AlertaRepositorio;
@@ -22,20 +20,25 @@ import java.util.stream.Collectors;
 @Service
 public class ReporteService {
 
-    @Autowired
-    private HistoricoRepositorio historicoRepositorio;
-    @Autowired
-    private DispositivoVirtualRepositorio dispositivoVirtualRepositorio;
-    @Autowired
-    private AlertaRepositorio alertaRepositorio;
+    private final HistoricoRepositorio historicoRepositorio;
+    private final DispositivoVirtualRepositorio dispositivoVirtualRepositorio;
+    private final AlertaRepositorio alertaRepositorio;
+
+    public ReporteService(HistoricoRepositorio historicoRepositorio,
+                          DispositivoVirtualRepositorio dispositivoVirtualRepositorio,
+                          AlertaRepositorio alertaRepositorio) {
+        this.historicoRepositorio = historicoRepositorio;
+        this.dispositivoVirtualRepositorio = dispositivoVirtualRepositorio;
+        this.alertaRepositorio = alertaRepositorio;
+    }
 
     @Transactional(readOnly = true)
-    public ReportResponseDto getReport(Long userId) {
+    public ReporteRespuestaDto getReport(Long userId) {
         List<Historico> history = historicoRepositorio
                 .findByDispositivoHabitacionCasaUsuarioIdOrderByFechaRegistroDesc(userId);
-        List<ConsumptionCompareItemDto> topConsumers = buildTopConsumers(history);
+        List<ItemComparacionConsumoDto> topConsumers = buildTopConsumers(history);
 
-        return ReportResponseDto.builder()
+        return ReporteRespuestaDto.builder()
                 .totalKwh(round(history.stream().map(Historico::getKwhConsumidos).mapToDouble(Double::doubleValue).sum()))
                 .totalDurationMinutes(history.stream()
                         .map(Historico::getDuracionMinutos)
@@ -50,7 +53,7 @@ public class ReporteService {
 
     @Transactional(readOnly = true)
     public byte[] exportPdf(Long userId) {
-        ReportResponseDto report = getReport(userId);
+        ReporteRespuestaDto report = getReport(userId);
         StringBuilder text = new StringBuilder();
         text.append("EcoVolt - Reporte de consumo energetico\n");
         text.append("Consumo total: ").append(report.getTotalKwh()).append(" kWh\n");
@@ -59,7 +62,7 @@ public class ReporteService {
         text.append("Alertas: ").append(report.getAlertCount()).append("\n\n");
         text.append("Mayores consumos:\n");
 
-        for (ConsumptionCompareItemDto item : report.getTopConsumers()) {
+        for (ItemComparacionConsumoDto item : report.getTopConsumers()) {
             text.append("- ")
                     .append(item.getDeviceName())
                     .append(" (")
@@ -72,7 +75,7 @@ public class ReporteService {
         return buildSimplePdf(text.toString());
     }
 
-    private List<ConsumptionCompareItemDto> buildTopConsumers(List<Historico> history) {
+    private List<ItemComparacionConsumoDto> buildTopConsumers(List<Historico> history) {
         Map<Long, DispositivoVirtual> devicesById = history.stream()
                 .map(Historico::getDispositivo)
                 .collect(Collectors.toMap(
@@ -94,15 +97,15 @@ public class ReporteService {
         return totals.entrySet()
                 .stream()
                 .map(entry -> toItem(devicesById.get(entry.getKey()), entry.getValue(), totalKwh))
-                .sorted(Comparator.comparing(ConsumptionCompareItemDto::getTotalKwh).reversed())
+                .sorted(Comparator.comparing(ItemComparacionConsumoDto::getTotalKwh).reversed())
                 .limit(5)
                 .toList();
     }
 
-    private ConsumptionCompareItemDto toItem(DispositivoVirtual device, Double deviceTotal, double totalKwh) {
+    private ItemComparacionConsumoDto toItem(DispositivoVirtual device, Double deviceTotal, double totalKwh) {
         double percentage = totalKwh == 0 ? 0 : (deviceTotal / totalKwh) * 100;
 
-        return ConsumptionCompareItemDto.builder()
+        return ItemComparacionConsumoDto.builder()
                 .deviceId(device.getId())
                 .deviceName(device.getNombre())
                 .roomId(device.getHabitacion().getId())

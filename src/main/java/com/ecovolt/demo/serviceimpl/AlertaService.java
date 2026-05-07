@@ -1,10 +1,8 @@
 package com.ecovolt.demo.serviceimpl;
 
-import org.springframework.beans.factory.annotation.Autowired;
-
-import com.ecovolt.demo.dtos.request.AlertLimitRequestDto;
-import com.ecovolt.demo.dtos.response.AlertResponseDto;
-import com.ecovolt.demo.dtos.response.LimitResponseDto;
+import com.ecovolt.demo.dtos.request.LimiteAlertaSolicitudDto;
+import com.ecovolt.demo.dtos.response.AlertaRespuestaDto;
+import com.ecovolt.demo.dtos.response.LimiteRespuestaDto;
 import com.ecovolt.demo.entities.Alerta;
 import com.ecovolt.demo.entities.Historico;
 import com.ecovolt.demo.entities.DispositivoVirtual;
@@ -25,25 +23,56 @@ public class AlertaService {
 
     private static final String EXCESS_CONSUMPTION = "CONSUMO_EXCESIVO";
 
-    @Autowired
-    private DispositivoVirtualRepositorio dispositivoVirtualRepositorio;
-    @Autowired
-    private HistoricoRepositorio historicoRepositorio;
-    @Autowired
-    private AlertaRepositorio alertaRepositorio;
+    private final DispositivoVirtualRepositorio dispositivoVirtualRepositorio;
+    private final HistoricoRepositorio historicoRepositorio;
+    private final AlertaRepositorio alertaRepositorio;
+
+    public AlertaService(DispositivoVirtualRepositorio dispositivoVirtualRepositorio,
+                         HistoricoRepositorio historicoRepositorio,
+                         AlertaRepositorio alertaRepositorio) {
+        this.dispositivoVirtualRepositorio = dispositivoVirtualRepositorio;
+        this.historicoRepositorio = historicoRepositorio;
+        this.alertaRepositorio = alertaRepositorio;
+    }
 
     @Transactional
-    public LimitResponseDto crearLimite(AlertLimitRequestDto solicitud, Long usuarioId) {
+    public AlertaRespuestaDto create(Alerta request) {
+        DispositivoVirtual dispositivo = findDevice(request);
+
+        request.setId(null);
+        request.setDispositivo(dispositivo);
+        if (request.getFechaCreacion() == null) {
+            request.setFechaCreacion(LocalDateTime.now());
+        }
+
+        return convertirARespuesta(alertaRepositorio.save(request));
+    }
+
+    @Transactional(readOnly = true)
+    public List<AlertaRespuestaDto> findAll() {
+        return alertaRepositorio.findAll()
+                .stream()
+                .map(this::convertirARespuesta)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public AlertaRespuestaDto findById(Long id) {
+        return convertirARespuesta(findAlert(id));
+    }
+
+    @Transactional
+    public LimiteRespuestaDto crearLimite(LimiteAlertaSolicitudDto solicitud, Long usuarioId) {
         return guardarLimite(solicitud.getDeviceId(), solicitud.getLimitKwh(), usuarioId);
     }
 
     @Transactional
-    public LimitResponseDto actualizarLimite(Long dispositivoId, AlertLimitRequestDto solicitud, Long usuarioId) {
+    public LimiteRespuestaDto actualizarLimite(Long dispositivoId, LimiteAlertaSolicitudDto solicitud, Long usuarioId) {
         return guardarLimite(dispositivoId, solicitud.getLimitKwh(), usuarioId);
     }
 
     @Transactional(readOnly = true)
-    public List<AlertResponseDto> obtenerHistorial(Long usuarioId) {
+    public List<AlertaRespuestaDto> obtenerHistorial(Long usuarioId) {
         return alertaRepositorio.findByDispositivoHabitacionCasaUsuarioIdOrderByFechaCreacionDesc(usuarioId)
                 .stream()
                 .map(this::convertirARespuesta)
@@ -51,9 +80,9 @@ public class AlertaService {
     }
 
     @Transactional(readOnly = true)
-    public List<AlertResponseDto> filtrarAlertas(Long usuarioId, Long dispositivoId, LocalDate desde, LocalDate hasta) {
+    public List<AlertaRespuestaDto> filtrarAlertas(Long usuarioId, Long dispositivoId, LocalDate desde, LocalDate hasta) {
         List<Alerta> alertas = alertaRepositorio.findByDispositivoHabitacionCasaUsuarioIdOrderByFechaCreacionDesc(usuarioId);
-        List<AlertResponseDto> respuesta = new ArrayList<>();
+        List<AlertaRespuestaDto> respuesta = new ArrayList<>();
 
         for (Alerta alerta : alertas) {
             boolean valido = true;
@@ -81,7 +110,7 @@ public class AlertaService {
     }
 
     @Transactional
-    public AlertResponseDto marcarComoLeida(Long alertaId, Long usuarioId) {
+    public AlertaRespuestaDto marcarComoLeida(Long alertaId, Long usuarioId) {
         Alerta alerta = alertaRepositorio.findByIdAndDispositivoHabitacionCasaUsuarioId(alertaId, usuarioId)
                 .orElseThrow(() -> new ResourceNotFoundException("Alerta no encontrada"));
 
@@ -89,7 +118,29 @@ public class AlertaService {
         return convertirARespuesta(alertaRepositorio.save(alerta));
     }
 
-    private LimitResponseDto guardarLimite(Long dispositivoId, Double limiteKwh, Long usuarioId) {
+    @Transactional
+    public AlertaRespuestaDto update(Long id, Alerta request) {
+        Alerta alerta = findAlert(id);
+        DispositivoVirtual dispositivo = findDevice(request);
+
+        alerta.setTipo(request.getTipo());
+        alerta.setMensaje(request.getMensaje());
+        alerta.setLeido(request.isLeido());
+        alerta.setDispositivo(dispositivo);
+        if (request.getFechaCreacion() != null) {
+            alerta.setFechaCreacion(request.getFechaCreacion());
+        }
+
+        return convertirARespuesta(alertaRepositorio.save(alerta));
+    }
+
+    @Transactional
+    public void delete(Long id) {
+        Alerta alerta = findAlert(id);
+        alertaRepositorio.delete(alerta);
+    }
+
+    private LimiteRespuestaDto guardarLimite(Long dispositivoId, Double limiteKwh, Long usuarioId) {
         DispositivoVirtual dispositivo = dispositivoVirtualRepositorio.findByIdAndHabitacionCasaUsuarioId(dispositivoId, usuarioId)
                 .orElseThrow(() -> new ResourceNotFoundException("Dispositivo no encontrado"));
 
@@ -97,7 +148,7 @@ public class AlertaService {
         dispositivo = dispositivoVirtualRepositorio.save(dispositivo);
         crearAlertaSiSuperaLimite(dispositivo, usuarioId);
 
-        return LimitResponseDto.builder()
+        return LimiteRespuestaDto.builder()
                 .deviceId(dispositivo.getId())
                 .deviceName(dispositivo.getNombre())
                 .limitKwh(dispositivo.getLimiteKwh())
@@ -125,10 +176,24 @@ public class AlertaService {
                 .build());
     }
 
-    private AlertResponseDto convertirARespuesta(Alerta alerta) {
+    private Alerta findAlert(Long id) {
+        return alertaRepositorio.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Alerta no encontrada"));
+    }
+
+    private DispositivoVirtual findDevice(Alerta alerta) {
+        if (alerta.getDispositivo() == null || alerta.getDispositivo().getId() == null) {
+            return null;
+        }
+
+        return dispositivoVirtualRepositorio.findById(alerta.getDispositivo().getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Dispositivo no encontrado"));
+    }
+
+    private AlertaRespuestaDto convertirARespuesta(Alerta alerta) {
         DispositivoVirtual dispositivo = alerta.getDispositivo();
 
-        return AlertResponseDto.builder()
+        return AlertaRespuestaDto.builder()
                 .id(alerta.getId())
                 .tipo(alerta.getTipo())
                 .mensaje(alerta.getMensaje())

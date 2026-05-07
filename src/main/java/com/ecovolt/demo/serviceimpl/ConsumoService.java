@@ -1,11 +1,10 @@
 package com.ecovolt.demo.serviceimpl;
 
-import org.springframework.beans.factory.annotation.Autowired;
-
-import com.ecovolt.demo.dtos.response.ConsumptionCompareItemDto;
-import com.ecovolt.demo.dtos.response.ConsumptionCompareResponseDto;
-import com.ecovolt.demo.dtos.response.ConsumptionResponseDto;
-import com.ecovolt.demo.dtos.response.RoomConsumptionResponseDto;
+import com.ecovolt.demo.dtos.response.ItemComparacionConsumoDto;
+import com.ecovolt.demo.dtos.response.ComparacionConsumoRespuestaDto;
+import com.ecovolt.demo.dtos.response.ConsumoRespuestaDto;
+import com.ecovolt.demo.dtos.response.HistoricoRespuestaDto;
+import com.ecovolt.demo.dtos.response.ConsumoHabitacionRespuestaDto;
 import com.ecovolt.demo.entities.Habitacion;
 import com.ecovolt.demo.entities.Historico;
 import com.ecovolt.demo.entities.DispositivoVirtual;
@@ -27,16 +26,67 @@ import java.util.stream.Collectors;
 @Service
 public class ConsumoService implements IConsumoService {
 
-    @Autowired
-    private HabitacionRepositorio habitacionRepositorio;
-    @Autowired
-    private HistoricoRepositorio historicoRepositorio;
-    @Autowired
-    private DispositivoVirtualRepositorio dispositivoVirtualRepositorio;
+    private final HabitacionRepositorio habitacionRepositorio;
+    private final HistoricoRepositorio historicoRepositorio;
+    private final DispositivoVirtualRepositorio dispositivoVirtualRepositorio;
+
+    public ConsumoService(HabitacionRepositorio habitacionRepositorio,
+                          HistoricoRepositorio historicoRepositorio,
+                          DispositivoVirtualRepositorio dispositivoVirtualRepositorio) {
+        this.habitacionRepositorio = habitacionRepositorio;
+        this.historicoRepositorio = historicoRepositorio;
+        this.dispositivoVirtualRepositorio = dispositivoVirtualRepositorio;
+    }
+
+    @Override
+    @Transactional
+    public HistoricoRespuestaDto create(Historico request) {
+        DispositivoVirtual dispositivo = findDevice(request);
+
+        request.setId(null);
+        request.setDispositivo(dispositivo);
+        return toHistoryResponse(historicoRepositorio.save(request));
+    }
 
     @Override
     @Transactional(readOnly = true)
-    public RoomConsumptionResponseDto obtenerConsumoHabitacion(Long habitacionId, Long usuarioId) {
+    public List<HistoricoRespuestaDto> findAll() {
+        return historicoRepositorio.findAll()
+                .stream()
+                .map(this::toHistoryResponse)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public HistoricoRespuestaDto findById(Long id) {
+        return toHistoryResponse(findHistory(id));
+    }
+
+    @Override
+    @Transactional
+    public HistoricoRespuestaDto update(Long id, Historico request) {
+        Historico historico = findHistory(id);
+        DispositivoVirtual dispositivo = findDevice(request);
+
+        historico.setFechaRegistro(request.getFechaRegistro());
+        historico.setKwhConsumidos(request.getKwhConsumidos());
+        historico.setDuracionMinutos(request.getDuracionMinutos());
+        historico.setDispositivo(dispositivo);
+
+        return toHistoryResponse(historicoRepositorio.save(historico));
+    }
+
+    @Override
+    @Transactional
+    public void delete(Long id) {
+        Historico historico = findHistory(id);
+        historicoRepositorio.delete(historico);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ConsumoHabitacionRespuestaDto obtenerConsumoHabitacion(Long habitacionId, Long usuarioId) {
         Habitacion habitacion = habitacionRepositorio.findByIdAndCasaUsuarioId(habitacionId, usuarioId)
                 .orElseThrow(() -> new ResourceNotFoundException("Habitacion no encontrada"));
 
@@ -46,15 +96,15 @@ public class ConsumoService implements IConsumoService {
                         usuarioId
                 );
 
-        List<ConsumptionCompareItemDto> dispositivos = buildDeviceComparison(historial);
-        double totalKwh = dispositivos.stream().mapToDouble(ConsumptionCompareItemDto::getTotalKwh).sum();
+        List<ItemComparacionConsumoDto> dispositivos = buildDeviceComparison(historial);
+        double totalKwh = dispositivos.stream().mapToDouble(ItemComparacionConsumoDto::getTotalKwh).sum();
         int totalDuration = historial.stream()
                 .map(Historico::getDuracionMinutos)
                 .filter(minutes -> minutes != null)
                 .mapToInt(Integer::intValue)
                 .sum();
 
-        return RoomConsumptionResponseDto.builder()
+        return ConsumoHabitacionRespuestaDto.builder()
                 .roomId(habitacion.getId())
                 .roomName(habitacion.getNombre())
                 .totalKwh(round(totalKwh))
@@ -65,13 +115,13 @@ public class ConsumoService implements IConsumoService {
 
     @Override
     @Transactional(readOnly = true)
-    public ConsumptionCompareResponseDto compararConsumo(Long usuarioId) {
+    public ComparacionConsumoRespuestaDto compararConsumo(Long usuarioId) {
         List<Historico> historial = historicoRepositorio
                 .findByDispositivoHabitacionCasaUsuarioIdOrderByFechaRegistroDesc(usuarioId);
-        List<ConsumptionCompareItemDto> dispositivos = buildDeviceComparison(historial);
-        double totalKwh = dispositivos.stream().mapToDouble(ConsumptionCompareItemDto::getTotalKwh).sum();
+        List<ItemComparacionConsumoDto> dispositivos = buildDeviceComparison(historial);
+        double totalKwh = dispositivos.stream().mapToDouble(ItemComparacionConsumoDto::getTotalKwh).sum();
 
-        return ConsumptionCompareResponseDto.builder()
+        return ComparacionConsumoRespuestaDto.builder()
                 .totalKwh(round(totalKwh))
                 .devices(dispositivos)
                 .build();
@@ -79,7 +129,7 @@ public class ConsumoService implements IConsumoService {
 
     @Override
     @Transactional(readOnly = true)
-    public ConsumptionResponseDto obtenerConsumoDispositivo(Long dispositivoId, Long usuarioId) {
+    public ConsumoRespuestaDto obtenerConsumoDispositivo(Long dispositivoId, Long usuarioId) {
         DispositivoVirtual device = dispositivoVirtualRepositorio.findByIdAndHabitacionCasaUsuarioId(dispositivoId, usuarioId)
                 .orElseThrow(() -> new ResourceNotFoundException("Dispositivo no encontrado"));
 
@@ -98,7 +148,7 @@ public class ConsumoService implements IConsumoService {
         double weeklyKwh = sumBetween(historial, weekStart, today);
         double monthlyKwh = sumBetween(historial, monthStart, today);
 
-        return ConsumptionResponseDto.builder()
+        return ConsumoRespuestaDto.builder()
                 .deviceId(device.getId())
                 .deviceName(device.getNombre())
                 .dailyKwh(round(dailyKwh))
@@ -107,7 +157,7 @@ public class ConsumoService implements IConsumoService {
                 .build();
     }
 
-    private List<ConsumptionCompareItemDto> buildDeviceComparison(List<Historico> historial) {
+    private List<ItemComparacionConsumoDto> buildDeviceComparison(List<Historico> historial) {
         Map<Long, DispositivoVirtual> dispositivosById = historial.stream()
                 .map(Historico::getDispositivo)
                 .collect(Collectors.toMap(
@@ -129,14 +179,14 @@ public class ConsumoService implements IConsumoService {
         return totalsByDevice.entrySet()
                 .stream()
                 .map(entry -> buildDeviceItem(dispositivosById.get(entry.getKey()), entry.getValue(), totalKwh))
-                .sorted(Comparator.comparing(ConsumptionCompareItemDto::getTotalKwh).reversed())
+                .sorted(Comparator.comparing(ItemComparacionConsumoDto::getTotalKwh).reversed())
                 .toList();
     }
 
-    private ConsumptionCompareItemDto buildDeviceItem(DispositivoVirtual device, Double deviceTotal, double totalKwh) {
+    private ItemComparacionConsumoDto buildDeviceItem(DispositivoVirtual device, Double deviceTotal, double totalKwh) {
         double percentage = totalKwh == 0 ? 0 : (deviceTotal / totalKwh) * 100;
 
-        return ConsumptionCompareItemDto.builder()
+        return ItemComparacionConsumoDto.builder()
                 .deviceId(device.getId())
                 .deviceName(device.getNombre())
                 .roomId(device.getHabitacion().getId())
@@ -165,5 +215,31 @@ public class ConsumoService implements IConsumoService {
 
     private double round(double value) {
         return Math.round(value * 100.0) / 100.0;
+    }
+
+    private Historico findHistory(Long id) {
+        return historicoRepositorio.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Historico no encontrado"));
+    }
+
+    private DispositivoVirtual findDevice(Historico historico) {
+        if (historico.getDispositivo() == null || historico.getDispositivo().getId() == null) {
+            throw new ResourceNotFoundException("Dispositivo no encontrado");
+        }
+
+        return dispositivoVirtualRepositorio.findById(historico.getDispositivo().getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Dispositivo no encontrado"));
+    }
+
+    private HistoricoRespuestaDto toHistoryResponse(Historico historico) {
+        DispositivoVirtual dispositivo = historico.getDispositivo();
+        return HistoricoRespuestaDto.builder()
+                .id(historico.getId())
+                .fechaRegistro(historico.getFechaRegistro())
+                .kwhConsumidos(historico.getKwhConsumidos())
+                .duracionMinutos(historico.getDuracionMinutos())
+                .dispositivoId(dispositivo.getId())
+                .dispositivoNombre(dispositivo.getNombre())
+                .build();
     }
 }

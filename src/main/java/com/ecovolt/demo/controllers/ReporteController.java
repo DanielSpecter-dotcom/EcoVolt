@@ -2,8 +2,8 @@ package com.ecovolt.demo.controllers;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
-import com.ecovolt.demo.dtos.response.ApiResponse;
-import com.ecovolt.demo.dtos.response.ReportResponseDto;
+import com.ecovolt.demo.dtos.response.RespuestaApi;
+import com.ecovolt.demo.dtos.response.ReporteRespuestaDto;
 import com.ecovolt.demo.security.CustomUserDetails;
 import com.ecovolt.demo.serviceimpl.ReporteService;
 import org.springframework.http.HttpHeaders;
@@ -22,10 +22,10 @@ public class ReporteController {
     private ReporteService reporteService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<ReportResponseDto>> getReport(
+    public ResponseEntity<RespuestaApi<ReporteRespuestaDto>> getReport(
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-        ReportResponseDto data = reporteService.getReport(userDetails.getId());
-        return ResponseEntity.ok(new ApiResponse<>(true, "Reporte de consumo obtenido exitosamente", data));
+        ReporteRespuestaDto data = reporteService.getReport(userDetails.getId());
+        return ResponseEntity.ok(new RespuestaApi<>(true, "Reporte de consumo obtenido exitosamente", data));
     }
 
     @GetMapping("/export/pdf")

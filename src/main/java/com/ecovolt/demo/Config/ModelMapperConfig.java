@@ -1,10 +1,10 @@
 package com.ecovolt.demo.Config;
 
-import com.ecovolt.demo.dtos.request.DeviceCreateDto;
-import com.ecovolt.demo.dtos.request.NotificationSettingsDto;
-import com.ecovolt.demo.dtos.request.RegisterRequestDto;
-import com.ecovolt.demo.dtos.response.DeviceResponseDto;
-import com.ecovolt.demo.dtos.response.UsuarioResponseDto;
+import com.ecovolt.demo.dtos.request.CrearDispositivoDto;
+import com.ecovolt.demo.dtos.request.ConfiguracionNotificacionesDto;
+import com.ecovolt.demo.dtos.request.RegistroUsuarioDto;
+import com.ecovolt.demo.dtos.response.DispositivoRespuestaDto;
+import com.ecovolt.demo.dtos.response.UsuarioRespuestaDto;
 import com.ecovolt.demo.entities.Rol;
 import com.ecovolt.demo.entities.Usuario;
 import com.ecovolt.demo.entities.DispositivoVirtual;
@@ -36,40 +36,40 @@ public class ModelMapperConfig {
 
     private void configureUserMappings(ModelMapper mm) {
         // Registro
-        mm.createTypeMap(RegisterRequestDto.class, Usuario.class)
+        mm.createTypeMap(RegistroUsuarioDto.class, Usuario.class)
                 .addMappings(m -> {
                     m.skip(Usuario::setId);
-                    m.map(RegisterRequestDto::getTipoUso, Usuario::setTipoUsuario);
+                    m.map(RegistroUsuarioDto::getTipoUso, Usuario::setTipoUsuario);
                 });
 
         // Configuración de Notificaciones
-        mm.createTypeMap(NotificationSettingsDto.class, Usuario.class)
+        mm.createTypeMap(ConfiguracionNotificacionesDto.class, Usuario.class)
                 .addMappings(m -> {
-                    m.map(NotificationSettingsDto::getConsumoExcesivo, Usuario::setNotificarConsumoExcesivo);
-                    m.map(NotificationSettingsDto::getUsoProlongado, Usuario::setNotificarUsoProlongado);
-                    m.map(NotificationSettingsDto::getReporteSemanal, Usuario::setNotificarReporteSemanal);
+                    m.map(ConfiguracionNotificacionesDto::getConsumoExcesivo, Usuario::setNotificarConsumoExcesivo);
+                    m.map(ConfiguracionNotificacionesDto::getUsoProlongado, Usuario::setNotificarUsoProlongado);
+                    m.map(ConfiguracionNotificacionesDto::getReporteSemanal, Usuario::setNotificarReporteSemanal);
                 });
 
         // Respuesta de Usuario (con Converter inline para ahorrar espacio)
-        mm.createTypeMap(Usuario.class, UsuarioResponseDto.class)
+        mm.createTypeMap(Usuario.class, UsuarioRespuestaDto.class)
                 .addMappings(m -> m.using(ctx ->
                                 ctx.getSource() == null ? List.of() :
                                         ((Set<Rol>) ctx.getSource()).stream()
                                                 .map(Rol::getNombre).sorted().toList())
-                        .map(Usuario::getRoles, UsuarioResponseDto::setRoles));
+                        .map(Usuario::getRoles, UsuarioRespuestaDto::setRoles));
     }
 
     private void configureDeviceMappings(ModelMapper mm) {
         // Creación de Dispositivo
-        mm.createTypeMap(DeviceCreateDto.class, DispositivoVirtual.class)
+        mm.createTypeMap(CrearDispositivoDto.class, DispositivoVirtual.class)
                 .addMappings(m -> {
                     m.skip(DispositivoVirtual::setId);
-                    m.map(DeviceCreateDto::getTipoDispositivo, DispositivoVirtual::setTipo);
-                    m.map(DeviceCreateDto::getPotenciaEstimadaWatts, DispositivoVirtual::setPotenciaWatts);
+                    m.map(CrearDispositivoDto::getTipoDispositivo, DispositivoVirtual::setTipo);
+                    m.map(CrearDispositivoDto::getPotenciaEstimadaWatts, DispositivoVirtual::setPotenciaWatts);
                 });
 
         // Respuesta de Dispositivo (Mapeo de ID de habitación)
-        mm.createTypeMap(DispositivoVirtual.class, DeviceResponseDto.class)
-                .addMapping(src -> src.getHabitacion().getId(), DeviceResponseDto::setHabitacionId);
+        mm.createTypeMap(DispositivoVirtual.class, DispositivoRespuestaDto.class)
+                .addMapping(src -> src.getHabitacion().getId(), DispositivoRespuestaDto::setHabitacionId);
     }
 }

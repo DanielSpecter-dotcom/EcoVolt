@@ -1,12 +1,13 @@
 package com.ecovolt.demo.serviceimpl;
 
-import com.ecovolt.demo.dtos.request.RoutineRequestDto;
-import com.ecovolt.demo.dtos.request.RoutineUpdateRequestDto;
-import com.ecovolt.demo.dtos.response.RoutineDeviceActionResponseDto;
-import com.ecovolt.demo.dtos.response.RoutineResponseDto;
+import com.ecovolt.demo.dtos.request.CrearRutinaDto;
+import com.ecovolt.demo.dtos.request.ActualizarRutinaDto;
+import com.ecovolt.demo.dtos.response.AccionDispositivoRutinaRespuestaDto;
+import com.ecovolt.demo.dtos.response.RutinaRespuestaDto;
 import com.ecovolt.demo.exceptions.ResourceNotFoundException;
 import com.ecovolt.demo.services.RoutineService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -15,21 +16,22 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Service
+@Transactional
 public class RutinaMemoriaService implements RoutineService {
 
     private final AtomicLong sequence = new AtomicLong(1);
-    private final Map<Long, RoutineResponseDto> routines = new ConcurrentHashMap<>();
+    private final Map<Long, RutinaRespuestaDto> routines = new ConcurrentHashMap<>();
 
     @Override
-    public RoutineResponseDto create(RoutineRequestDto request) {
-        RoutineResponseDto response = RoutineResponseDto.builder()
+    public RutinaRespuestaDto create(CrearRutinaDto request) {
+        RutinaRespuestaDto response = RutinaRespuestaDto.builder()
                 .id(sequence.getAndIncrement())
                 .homeId(request.getHomeId())
                 .name(request.getNombre())
                 .executionTime(request.getTiempoEjecucion())
                 .daysOfWeek(new LinkedHashSet<>(request.getDiasSemana()))
                 .actions(request.getAcciones().stream()
-                        .map(action -> RoutineDeviceActionResponseDto.builder()
+                        .map(action -> AccionDispositivoRutinaRespuestaDto.builder()
                                 .deviceId(action.getDeviceId())
                                 .turnOn(action.getEncendido())
                                 .build())
@@ -43,15 +45,22 @@ public class RutinaMemoriaService implements RoutineService {
     }
 
     @Override
-    public List<RoutineResponseDto> findAll() {
+    @Transactional(readOnly = true)
+    public List<RutinaRespuestaDto> findAll() {
         return routines.values().stream()
-                .sorted(java.util.Comparator.comparing(RoutineResponseDto::getId))
+                .sorted(java.util.Comparator.comparing(RutinaRespuestaDto::getId))
                 .toList();
     }
 
     @Override
-    public RoutineResponseDto update(Long routineId, RoutineUpdateRequestDto request) {
-        RoutineResponseDto routine = findRoutine(routineId);
+    @Transactional(readOnly = true)
+    public RutinaRespuestaDto findById(Long routineId) {
+        return findRoutine(routineId);
+    }
+
+    @Override
+    public RutinaRespuestaDto update(Long routineId, ActualizarRutinaDto request) {
+        RutinaRespuestaDto routine = findRoutine(routineId);
 
         /*
          * La implementacion productiva debe persistir cambios parciales:
@@ -72,7 +81,7 @@ public class RutinaMemoriaService implements RoutineService {
         }
         if (request.getAcciones() != null) {
             routine.setActions(request.getAcciones().stream()
-                    .map(action -> RoutineDeviceActionResponseDto.builder()
+                    .map(action -> AccionDispositivoRutinaRespuestaDto.builder()
                             .deviceId(action.getDeviceId())
                             .turnOn(action.getEncendido())
                             .build())
@@ -101,7 +110,7 @@ public class RutinaMemoriaService implements RoutineService {
          * desactivarlo se liberan para que el scheduler vuelva a evaluarlas.
          */
         int updated = 0;
-        for (RoutineResponseDto routine : routines.values()) {
+        for (RutinaRespuestaDto routine : routines.values()) {
             if (homeId.equals(routine.getHomeId())) {
                 routine.setPausedByAwayMode(awayModeEnabled);
                 updated++;
@@ -110,8 +119,8 @@ public class RutinaMemoriaService implements RoutineService {
         return updated;
     }
 
-    private RoutineResponseDto findRoutine(Long routineId) {
-        RoutineResponseDto routine = routines.get(routineId);
+    private RutinaRespuestaDto findRoutine(Long routineId) {
+        RutinaRespuestaDto routine = routines.get(routineId);
         if (routine == null) {
             throw new ResourceNotFoundException("Rutina no encontrada");
         }

@@ -1,21 +1,23 @@
 package com.ecovolt.demo.services;
 
-import com.ecovolt.demo.dtos.request.RoutineRequestDto;
-import com.ecovolt.demo.dtos.request.RoutineUpdateRequestDto;
-import com.ecovolt.demo.dtos.response.RoutineResponseDto;
+import com.ecovolt.demo.dtos.request.CrearRutinaDto;
+import com.ecovolt.demo.dtos.request.ActualizarRutinaDto;
+import com.ecovolt.demo.dtos.response.RutinaRespuestaDto;
 
 import java.util.List;
 
 public interface RoutineService {
 
     // Debe registrar la programacion y las acciones independientes por dispositivo.
-    RoutineResponseDto create(RoutineRequestDto request);
+    RutinaRespuestaDto create(CrearRutinaDto request);
 
     // Debe retornar las rutinas visibles para el dashboard.
-    List<RoutineResponseDto> findAll();
+    List<RutinaRespuestaDto> findAll();
+
+    RutinaRespuestaDto findById(Long routineId);
 
     // Debe aplicar cambios parciales, incluida la pausa mediante enabled=false.
-    RoutineResponseDto update(Long routineId, RoutineUpdateRequestDto request);
+    RutinaRespuestaDto update(Long routineId, ActualizarRutinaDto request);
 
     // Debe eliminar definitivamente la rutina de la persistencia.
     void delete(Long routineId);

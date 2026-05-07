@@ -1,12 +1,12 @@
 package com.ecovolt.demo.controllers;
 
-import com.ecovolt.demo.dtos.response.ActividadDashboardDto;
-import com.ecovolt.demo.dtos.response.ApiResponse;
-import com.ecovolt.demo.dtos.response.DispositivoDashboardDto;
-import com.ecovolt.demo.dtos.response.EscenasRutinasDashboardDto;
-import com.ecovolt.demo.dtos.response.ResumenDashboardDto;
-import com.ecovolt.demo.dtos.response.RoutineResponseDto;
-import com.ecovolt.demo.dtos.response.SceneActivationResponseDto;
+import com.ecovolt.demo.dtos.response.ActividadPanelDto;
+import com.ecovolt.demo.dtos.response.RespuestaApi;
+import com.ecovolt.demo.dtos.response.DispositivoPanelDto;
+import com.ecovolt.demo.dtos.response.EscenasRutinasPanelDto;
+import com.ecovolt.demo.dtos.response.ResumenPanelDto;
+import com.ecovolt.demo.dtos.response.RutinaRespuestaDto;
+import com.ecovolt.demo.dtos.response.ActivacionEscenaRespuestaDto;
 import com.ecovolt.demo.security.CustomUserDetails;
 import com.ecovolt.demo.serviceimpl.DashboardService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,41 +29,41 @@ public class DashboardController {
     private DashboardService dashboardService;
 
     @GetMapping("/summary")
-    public ResponseEntity<ApiResponse<ResumenDashboardDto>> obtenerResumen(
+    public ResponseEntity<RespuestaApi<ResumenPanelDto>> obtenerResumen(
             @AuthenticationPrincipal CustomUserDetails usuario) {
-        ResumenDashboardDto data = dashboardService.obtenerResumen(usuario.getId());
-        return ResponseEntity.ok(new ApiResponse<>(true, "Resumen del dashboard obtenido exitosamente", data));
+        ResumenPanelDto data = dashboardService.obtenerResumen(usuario.getId());
+        return ResponseEntity.ok(new RespuestaApi<>(true, "Resumen del dashboard obtenido exitosamente", data));
     }
 
     @GetMapping("/devices")
-    public ResponseEntity<ApiResponse<List<DispositivoDashboardDto>>> obtenerDispositivos(
+    public ResponseEntity<RespuestaApi<List<DispositivoPanelDto>>> obtenerDispositivos(
             @AuthenticationPrincipal CustomUserDetails usuario) {
-        List<DispositivoDashboardDto> data = dashboardService.obtenerDispositivos(usuario.getId());
-        return ResponseEntity.ok(new ApiResponse<>(true, "Dispositivos del dashboard obtenidos exitosamente", data));
+        List<DispositivoPanelDto> data = dashboardService.obtenerDispositivos(usuario.getId());
+        return ResponseEntity.ok(new RespuestaApi<>(true, "Dispositivos del dashboard obtenidos exitosamente", data));
     }
 
     @GetMapping("/scenes-routines")
-    public ResponseEntity<ApiResponse<EscenasRutinasDashboardDto>> obtenerEscenasRutinas() {
-        EscenasRutinasDashboardDto data = dashboardService.obtenerEscenasRutinas();
-        return ResponseEntity.ok(new ApiResponse<>(true, "Escenas y rutinas obtenidas exitosamente", data));
+    public ResponseEntity<RespuestaApi<EscenasRutinasPanelDto>> obtenerEscenasRutinas() {
+        EscenasRutinasPanelDto data = dashboardService.obtenerEscenasRutinas();
+        return ResponseEntity.ok(new RespuestaApi<>(true, "Escenas y rutinas obtenidas exitosamente", data));
     }
 
     @PostMapping("/scenes/{id}/activate")
-    public ResponseEntity<ApiResponse<SceneActivationResponseDto>> activarEscena(@PathVariable Long id) {
-        SceneActivationResponseDto data = dashboardService.activarEscena(id);
-        return ResponseEntity.ok(new ApiResponse<>(true, "Escena activada exitosamente", data));
+    public ResponseEntity<RespuestaApi<ActivacionEscenaRespuestaDto>> activarEscena(@PathVariable Long id) {
+        ActivacionEscenaRespuestaDto data = dashboardService.activarEscena(id);
+        return ResponseEntity.ok(new RespuestaApi<>(true, "Escena activada exitosamente", data));
     }
 
     @PatchMapping("/routines/{id}/pause")
-    public ResponseEntity<ApiResponse<RoutineResponseDto>> pausarRutina(@PathVariable Long id) {
-        RoutineResponseDto data = dashboardService.pausarRutina(id);
-        return ResponseEntity.ok(new ApiResponse<>(true, "Rutina pausada exitosamente", data));
+    public ResponseEntity<RespuestaApi<RutinaRespuestaDto>> pausarRutina(@PathVariable Long id) {
+        RutinaRespuestaDto data = dashboardService.pausarRutina(id);
+        return ResponseEntity.ok(new RespuestaApi<>(true, "Rutina pausada exitosamente", data));
     }
 
     @GetMapping("/activity")
-    public ResponseEntity<ApiResponse<List<ActividadDashboardDto>>> obtenerActividad(
+    public ResponseEntity<RespuestaApi<List<ActividadPanelDto>>> obtenerActividad(
             @AuthenticationPrincipal CustomUserDetails usuario) {
-        List<ActividadDashboardDto> data = dashboardService.obtenerActividad(usuario.getId());
-        return ResponseEntity.ok(new ApiResponse<>(true, "Actividad reciente obtenida exitosamente", data));
+        List<ActividadPanelDto> data = dashboardService.obtenerActividad(usuario.getId());
+        return ResponseEntity.ok(new RespuestaApi<>(true, "Actividad reciente obtenida exitosamente", data));
     }
 }

@@ -1,42 +1,73 @@
 package com.ecovolt.demo.serviceimpl;
 
-import org.springframework.beans.factory.annotation.Autowired;
-
-import com.ecovolt.demo.dtos.request.NotificationSettingsDto;
-import com.ecovolt.demo.dtos.request.UpdatePasswordDto;
-import com.ecovolt.demo.dtos.request.UpdateUserProfileDto;
-import com.ecovolt.demo.dtos.response.UsuarioResponseDto;
+import com.ecovolt.demo.dtos.request.ConfiguracionNotificacionesDto;
+import com.ecovolt.demo.dtos.request.ActualizarContrasenaDto;
+import com.ecovolt.demo.dtos.request.ActualizarPerfilUsuarioDto;
+import com.ecovolt.demo.dtos.response.UsuarioRespuestaDto;
+import com.ecovolt.demo.entities.Rol;
 import com.ecovolt.demo.entities.Usuario;
 import com.ecovolt.demo.exceptions.BadRequestException;
 import com.ecovolt.demo.exceptions.ResourceNotFoundException;
+import com.ecovolt.demo.repositories.RolRepositorio;
 import com.ecovolt.demo.repositories.UsuarioRepositorio;
 import org.modelmapper.ModelMapper;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 public class UsuarioService {
 
-    @Autowired
-    private UsuarioRepositorio usuarioRepositorio;
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-    @Autowired
-    private ModelMapper modelMapper;
+    private final UsuarioRepositorio usuarioRepositorio;
+    private final RolRepositorio rolRepositorio;
+    private final PasswordEncoder passwordEncoder;
+    private final ModelMapper modelMapper;
+
+    public UsuarioService(UsuarioRepositorio usuarioRepositorio,
+                          RolRepositorio rolRepositorio,
+                          PasswordEncoder passwordEncoder,
+                          ModelMapper modelMapper) {
+        this.usuarioRepositorio = usuarioRepositorio;
+        this.rolRepositorio = rolRepositorio;
+        this.passwordEncoder = passwordEncoder;
+        this.modelMapper = modelMapper;
+    }
 
     @Transactional
-    public UsuarioResponseDto updateProfile(Long id, UpdateUserProfileDto request) {
+    public UsuarioRespuestaDto create(Usuario request) {
+        if (request.getContrasena() != null) {
+            request.setContrasena(passwordEncoder.encode(request.getContrasena()));
+        }
+        return modelMapper.map(usuarioRepositorio.save(request), UsuarioRespuestaDto.class);
+    }
+
+    @Transactional(readOnly = true)
+    public List<UsuarioRespuestaDto> findAll() {
+        return usuarioRepositorio.findAll()
+                .stream()
+                .map(usuario -> modelMapper.map(usuario, UsuarioRespuestaDto.class))
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public UsuarioRespuestaDto findById(Long id) {
+        return modelMapper.map(findUser(id), UsuarioRespuestaDto.class);
+    }
+
+    @Transactional
+    public UsuarioRespuestaDto updateProfile(Long id, ActualizarPerfilUsuarioDto request) {
         Usuario usuario = findUser(id);
 
         modelMapper.map(request, usuario);
         usuario.setNombre(usuario.getNombre().trim());
 
-        return modelMapper.map(usuarioRepositorio.save(usuario), UsuarioResponseDto.class);
+        return modelMapper.map(usuarioRepositorio.save(usuario), UsuarioRespuestaDto.class);
     }
 
     @Transactional
-    public void updatePassword(Long id, UpdatePasswordDto request) {
+    public void updatePassword(Long id, ActualizarContrasenaDto request) {
         Usuario usuario = findUser(id);
 
         if (!passwordEncoder.matches(request.getContrasenaActual(), usuario.getContrasena())) {
@@ -48,17 +79,57 @@ public class UsuarioService {
     }
 
     @Transactional
-    public UsuarioResponseDto updateNotificationSettings(Long id, NotificationSettingsDto request) {
+    public void delete(Long id) {
+        Usuario usuario = findUser(id);
+        usuarioRepositorio.delete(usuario);
+    }
+
+    @Transactional
+    public Rol createRole(Rol request) {
+        request.setId(null);
+        return rolRepositorio.save(request);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Rol> findAllRoles() {
+        return rolRepositorio.findAll();
+    }
+
+    @Transactional(readOnly = true)
+    public Rol findRoleById(Long id) {
+        return findRole(id);
+    }
+
+    @Transactional
+    public Rol updateRole(Long id, Rol request) {
+        Rol rol = findRole(id);
+        rol.setNombre(request.getNombre());
+        return rolRepositorio.save(rol);
+    }
+
+    @Transactional
+    public void deleteRole(Long id) {
+        Rol rol = findRole(id);
+        rolRepositorio.delete(rol);
+    }
+
+    @Transactional
+    public UsuarioRespuestaDto updateNotificationSettings(Long id, ConfiguracionNotificacionesDto request) {
         Usuario usuario = findUser(id);
 
         modelMapper.map(request, usuario);
 
-        return modelMapper.map(usuarioRepositorio.save(usuario), UsuarioResponseDto.class);
+        return modelMapper.map(usuarioRepositorio.save(usuario), UsuarioRespuestaDto.class);
     }
 
     private Usuario findUser(Long id) {
         return usuarioRepositorio.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
+    }
+
+    private Rol findRole(Long id) {
+        return rolRepositorio.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Rol no encontrado"));
     }
 
 }

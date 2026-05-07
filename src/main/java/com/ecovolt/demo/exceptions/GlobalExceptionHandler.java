@@ -1,6 +1,6 @@
 package com.ecovolt.demo.exceptions;
 
-import com.ecovolt.demo.dtos.response.ApiResponse;
+import com.ecovolt.demo.dtos.response.RespuestaApi;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.AuthenticationException;
@@ -14,25 +14,25 @@ import java.util.stream.Collectors;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<ApiResponse<Void>> handleNotFound(ResourceNotFoundException ex) {
+    public ResponseEntity<RespuestaApi<Void>> handleNotFound(ResourceNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(new ApiResponse<>(false, ex.getMessage(), null));
+                .body(new RespuestaApi<>(false, ex.getMessage(), null));
     }
 
     @ExceptionHandler(BadRequestException.class)
-    public ResponseEntity<ApiResponse<Void>> handleBadRequest(BadRequestException ex) {
+    public ResponseEntity<RespuestaApi<Void>> handleBadRequest(BadRequestException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(new ApiResponse<>(false, ex.getMessage(), null));
+                .body(new RespuestaApi<>(false, ex.getMessage(), null));
     }
 
     @ExceptionHandler(AuthenticationException.class)
-    public ResponseEntity<ApiResponse<Void>> handleAuthentication(AuthenticationException ex) {
+    public ResponseEntity<RespuestaApi<Void>> handleAuthentication(AuthenticationException ex) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(new ApiResponse<>(false, "Credenciales invalidas", null));
+                .body(new RespuestaApi<>(false, "Credenciales invalidas", null));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiResponse<Void>> handleValidation(MethodArgumentNotValidException ex) {
+    public ResponseEntity<RespuestaApi<Void>> handleValidation(MethodArgumentNotValidException ex) {
         String message = ex.getBindingResult()
                 .getFieldErrors()
                 .stream()
@@ -40,12 +40,12 @@ public class GlobalExceptionHandler {
                 .collect(Collectors.joining("; "));
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(new ApiResponse<>(false, message, null));
+                .body(new RespuestaApi<>(false, message, null));
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<ApiResponse<Void>> handleIllegalArgument(IllegalArgumentException ex) {
+    public ResponseEntity<RespuestaApi<Void>> handleIllegalArgument(IllegalArgumentException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(new ApiResponse<>(false, ex.getMessage(), null));
+                .body(new RespuestaApi<>(false, ex.getMessage(), null));
     }
 }
