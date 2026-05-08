@@ -1,6 +1,7 @@
 package com.ecovolt.demo.dtos;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonAlias;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -17,6 +18,7 @@ public class HabitacionDTO {
     private Long id;
     private String name;
 
-    @JsonProperty("home_id")
-    private Long homeId;
+    @JsonProperty("casa_id")
+    @JsonAlias("home_id")
+    private Long casaId;
 }

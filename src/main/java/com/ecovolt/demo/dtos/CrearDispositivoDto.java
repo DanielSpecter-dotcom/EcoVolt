@@ -14,10 +14,11 @@ import lombok.Setter;
 @Setter
 public class CrearDispositivoDto {
 
-    @NotNull(message = "El usuario es obligatorio")
-    @Positive(message = "El usuario debe ser valido")
-    @JsonProperty("usuario_id")
-    private Long usuarioId;
+    @NotNull(message = "La habitacion es obligatoria")
+    @Positive(message = "La habitacion debe ser valida")
+    @JsonProperty("habitacion_id")
+    @JsonAlias("room_id")
+    private Long habitacionId;
 
     @NotBlank(message = "El nombre del dispositivo es obligatorio")
     @Size(max = 80, message = "El nombre del dispositivo no debe superar 80 caracteres")

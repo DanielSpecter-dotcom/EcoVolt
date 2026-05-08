@@ -1,4 +1,7 @@
 package com.ecovolt.demo.repositories;
 
-public interface RutinaRepositorio {
+import com.ecovolt.demo.entities.Rutina;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface RutinaRepositorio extends JpaRepository<Rutina, Long> {
 }

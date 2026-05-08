@@ -7,16 +7,12 @@ import com.ecovolt.demo.dtos.AsignarHabitacionDispositivoDto;
 import com.ecovolt.demo.dtos.EstadoActualDispositivoDto;
 import com.ecovolt.demo.dtos.ActualizarDispositivoDto;
 import com.ecovolt.demo.dtos.DispositivoDTO;
-import com.ecovolt.demo.entities.Casa;
 import com.ecovolt.demo.entities.Habitacion;
 import com.ecovolt.demo.entities.Historico;
-import com.ecovolt.demo.entities.Usuario;
 import com.ecovolt.demo.entities.DispositivoVirtual;
 import com.ecovolt.demo.exceptions.ResourceNotFoundException;
-import com.ecovolt.demo.repositories.CasaRepositorio;
 import com.ecovolt.demo.repositories.HabitacionRepositorio;
 import com.ecovolt.demo.repositories.HistoricoRepositorio;
-import com.ecovolt.demo.repositories.UsuarioRepositorio;
 import com.ecovolt.demo.repositories.DispositivoVirtualRepositorio;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
@@ -28,21 +24,15 @@ import java.util.List;
 @Service
 public class DispositivoService {
 
-    private final UsuarioRepositorio usuarioRepositorio;
-    private final CasaRepositorio casaRepositorio;
     private final HabitacionRepositorio habitacionRepositorio;
     private final DispositivoVirtualRepositorio dispositivoVirtualRepositorio;
     private final HistoricoRepositorio historicoRepositorio;
     private final ModelMapper modelMapper;
 
-    public DispositivoService(UsuarioRepositorio usuarioRepositorio,
-                              CasaRepositorio casaRepositorio,
-                              HabitacionRepositorio habitacionRepositorio,
+    public DispositivoService(HabitacionRepositorio habitacionRepositorio,
                               DispositivoVirtualRepositorio dispositivoVirtualRepositorio,
                               HistoricoRepositorio historicoRepositorio,
                               ModelMapper modelMapper) {
-        this.usuarioRepositorio = usuarioRepositorio;
-        this.casaRepositorio = casaRepositorio;
         this.habitacionRepositorio = habitacionRepositorio;
         this.dispositivoVirtualRepositorio = dispositivoVirtualRepositorio;
         this.historicoRepositorio = historicoRepositorio;
@@ -51,22 +41,10 @@ public class DispositivoService {
 
     @Transactional
     public DispositivoDTO create(CrearDispositivoDto request) {
-        Usuario usuario = usuarioRepositorio.findById(request.getUsuarioId())
-                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
+        Habitacion habitacion = habitacionRepositorio.findById(request.getHabitacionId())
+                .orElseThrow(() -> new ResourceNotFoundException("Habitacion no encontrada"));
 
-        Casa casa = casaRepositorio.findFirstByUsuarioIdOrderByIdAsc(usuario.getId())
-                .orElseGet(() -> casaRepositorio.save(Casa.builder()
-                        .nombre("Hogar virtual")
-                        .usuario(usuario)
-                        .build()));
-
-        Habitacion habitacion = habitacionRepositorio.findFirstByCasaIdOrderByIdAsc(casa.getId())
-                .orElseGet(() -> habitacionRepositorio.save(Habitacion.builder()
-                        .nombre("General")
-                        .casa(casa)
-                        .build()));
-
-        DispositivoVirtual dispositivo = new DispositivoVirtual();
+        DispositivoVirtual dispositivo = modelMapper.map(request, DispositivoVirtual.class);
         dispositivo.setNombre(request.getNombre().trim());
         dispositivo.setTipo(request.getTipo().trim());
         dispositivo.setPotenciaWatts(SimuladorEnergiaUtils.obtenerPotenciaBaseWatts(request.getTipo()));
@@ -79,7 +57,12 @@ public class DispositivoService {
 
         historicoRepositorio.saveAll(buildSimulatedConsumption(dispositivo));
 
-        return toDto(dispositivo);
+        DispositivoDTO dispositivoDTO = modelMapper.map(dispositivo, DispositivoDTO.class);
+        dispositivoDTO.setStatus(dispositivo.isActivo() ? "ON" : "OFF");
+        dispositivoDTO.setMode(dispositivo.isAutomatico() ? "AUTOMATIC" : "MANUAL");
+        dispositivoDTO.setHabitacionId(dispositivo.getHabitacion().getId());
+        dispositivoDTO.setHabitacionNombre(dispositivo.getHabitacion().getNombre());
+        return dispositivoDTO;
     }
 
     @Transactional
@@ -89,7 +72,12 @@ public class DispositivoService {
 
         dispositivo.setHabitacion(habitacion);
         dispositivo = dispositivoVirtualRepositorio.save(dispositivo);
-        return toDto(dispositivo);
+        DispositivoDTO dispositivoDTO = modelMapper.map(dispositivo, DispositivoDTO.class);
+        dispositivoDTO.setStatus(dispositivo.isActivo() ? "ON" : "OFF");
+        dispositivoDTO.setMode(dispositivo.isAutomatico() ? "AUTOMATIC" : "MANUAL");
+        dispositivoDTO.setHabitacionId(dispositivo.getHabitacion().getId());
+        dispositivoDTO.setHabitacionNombre(dispositivo.getHabitacion().getNombre());
+        return dispositivoDTO;
     }
 
     @Transactional
@@ -119,7 +107,12 @@ public class DispositivoService {
             recalculateConsumption(updated);
         }
 
-        return toDto(updated);
+        DispositivoDTO dispositivoDTO = modelMapper.map(updated, DispositivoDTO.class);
+        dispositivoDTO.setStatus(updated.isActivo() ? "ON" : "OFF");
+        dispositivoDTO.setMode(updated.isAutomatico() ? "AUTOMATIC" : "MANUAL");
+        dispositivoDTO.setHabitacionId(updated.getHabitacion().getId());
+        dispositivoDTO.setHabitacionNombre(updated.getHabitacion().getNombre());
+        return dispositivoDTO;
     }
 
     @Transactional
@@ -141,21 +134,38 @@ public class DispositivoService {
             historicoRepositorio.save(buildHistory(updated, 0, 1));
         }
 
-        return toDto(updated);
+        DispositivoDTO dispositivoDTO = modelMapper.map(updated, DispositivoDTO.class);
+        dispositivoDTO.setStatus(updated.isActivo() ? "ON" : "OFF");
+        dispositivoDTO.setMode(updated.isAutomatico() ? "AUTOMATIC" : "MANUAL");
+        dispositivoDTO.setHabitacionId(updated.getHabitacion().getId());
+        dispositivoDTO.setHabitacionNombre(updated.getHabitacion().getNombre());
+        return dispositivoDTO;
     }
 
     @Transactional(readOnly = true)
     public List<DispositivoDTO> findAll() {
         return dispositivoVirtualRepositorio.findByEliminadoFalseOrderByIdAsc()
                 .stream()
-                .map(this::toDto)
+                .map(dispositivo -> {
+                    DispositivoDTO dispositivoDTO = modelMapper.map(dispositivo, DispositivoDTO.class);
+                    dispositivoDTO.setStatus(dispositivo.isActivo() ? "ON" : "OFF");
+                    dispositivoDTO.setMode(dispositivo.isAutomatico() ? "AUTOMATIC" : "MANUAL");
+                    dispositivoDTO.setHabitacionId(dispositivo.getHabitacion().getId());
+                    dispositivoDTO.setHabitacionNombre(dispositivo.getHabitacion().getNombre());
+                    return dispositivoDTO;
+                })
                 .toList();
     }
 
     @Transactional(readOnly = true)
     public DispositivoDTO findById(Long id) {
         DispositivoVirtual dispositivo = findActiveDevice(id);
-        return toDto(dispositivo);
+        DispositivoDTO dispositivoDTO = modelMapper.map(dispositivo, DispositivoDTO.class);
+        dispositivoDTO.setStatus(dispositivo.isActivo() ? "ON" : "OFF");
+        dispositivoDTO.setMode(dispositivo.isAutomatico() ? "AUTOMATIC" : "MANUAL");
+        dispositivoDTO.setHabitacionId(dispositivo.getHabitacion().getId());
+        dispositivoDTO.setHabitacionNombre(dispositivo.getHabitacion().getNombre());
+        return dispositivoDTO;
     }
 
     @Transactional
@@ -163,10 +173,6 @@ public class DispositivoService {
         DispositivoVirtual dispositivo = findActiveDevice(id);
         dispositivo.setAutomatico("AUTOMATIC".equals(request.getMode()));
         dispositivo = dispositivoVirtualRepositorio.save(dispositivo);
-        return toDto(dispositivo);
-    }
-
-    private DispositivoDTO toDto(DispositivoVirtual dispositivo) {
         DispositivoDTO dispositivoDTO = modelMapper.map(dispositivo, DispositivoDTO.class);
         dispositivoDTO.setStatus(dispositivo.isActivo() ? "ON" : "OFF");
         dispositivoDTO.setMode(dispositivo.isAutomatico() ? "AUTOMATIC" : "MANUAL");

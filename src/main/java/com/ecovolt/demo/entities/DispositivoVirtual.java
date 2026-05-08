@@ -3,6 +3,8 @@ package com.ecovolt.demo.entities;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.List;
+
 @Entity
 @Table(name = "dispositivos_virtuales")
 @Data
@@ -39,4 +41,10 @@ public class DispositivoVirtual {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "habitacion_id", nullable = false)
     private Habitacion habitacion;
+
+    @OneToMany(mappedBy = "dispositivo", cascade = CascadeType.ALL)
+    private List<Historico> historialRegistros;
+
+    @OneToMany(mappedBy = "dispositivo", cascade = CascadeType.ALL)
+    private List<Alerta> alertas;
 }

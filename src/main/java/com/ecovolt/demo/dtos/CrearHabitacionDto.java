@@ -1,6 +1,7 @@
 package com.ecovolt.demo.dtos;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonAlias;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -12,10 +13,11 @@ import lombok.Setter;
 @Setter
 public class CrearHabitacionDto {
 
-    @NotNull(message = "El usuario es obligatorio")
-    @Positive(message = "El usuario debe ser valido")
-    @JsonProperty("usuario_id")
-    private Long usuarioId;
+    @NotNull(message = "La casa es obligatoria")
+    @Positive(message = "La casa debe ser valida")
+    @JsonProperty("casa_id")
+    @JsonAlias("home_id")
+    private Long casaId;
 
     @NotBlank(message = "El nombre del ambiente es obligatorio")
     @Size(max = 80, message = "El nombre del ambiente no debe superar 80 caracteres")

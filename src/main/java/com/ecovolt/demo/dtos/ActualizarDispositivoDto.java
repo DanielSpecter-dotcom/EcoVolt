@@ -32,5 +32,6 @@ public class ActualizarDispositivoDto {
 
     @Positive(message = "El ambiente debe ser valido")
     @JsonProperty("room_id")
+    @JsonAlias("habitacion_id")
     private Long roomId;
 }

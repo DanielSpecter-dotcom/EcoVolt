@@ -4,11 +4,9 @@ import com.ecovolt.demo.dtos.CrearHabitacionDto;
 import com.ecovolt.demo.dtos.HabitacionDTO;
 import com.ecovolt.demo.entities.Casa;
 import com.ecovolt.demo.entities.Habitacion;
-import com.ecovolt.demo.entities.Usuario;
 import com.ecovolt.demo.exceptions.ResourceNotFoundException;
 import com.ecovolt.demo.repositories.CasaRepositorio;
 import com.ecovolt.demo.repositories.HabitacionRepositorio;
-import com.ecovolt.demo.repositories.UsuarioRepositorio;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,16 +16,13 @@ import java.util.List;
 @Service
 public class HabitacionService {
 
-    private final UsuarioRepositorio usuarioRepositorio;
     private final CasaRepositorio casaRepositorio;
     private final HabitacionRepositorio habitacionRepositorio;
     private final ModelMapper modelMapper;
 
-    public HabitacionService(UsuarioRepositorio usuarioRepositorio,
-                             CasaRepositorio casaRepositorio,
+    public HabitacionService(CasaRepositorio casaRepositorio,
                              HabitacionRepositorio habitacionRepositorio,
                              ModelMapper modelMapper) {
-        this.usuarioRepositorio = usuarioRepositorio;
         this.casaRepositorio = casaRepositorio;
         this.habitacionRepositorio = habitacionRepositorio;
         this.modelMapper = modelMapper;
@@ -35,14 +30,8 @@ public class HabitacionService {
 
     @Transactional
     public HabitacionDTO create(CrearHabitacionDto request) {
-        Usuario usuario = usuarioRepositorio.findById(request.getUsuarioId())
-                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
-
-        Casa casa = casaRepositorio.findFirstByUsuarioIdOrderByIdAsc(usuario.getId())
-                .orElseGet(() -> casaRepositorio.save(Casa.builder()
-                        .nombre("Hogar virtual")
-                        .usuario(usuario)
-                        .build()));
+        Casa casa = casaRepositorio.findById(request.getCasaId())
+                .orElseThrow(() -> new ResourceNotFoundException("Casa no encontrada"));
 
         Habitacion habitacion = modelMapper.map(request, Habitacion.class);
         habitacion.setId(null);
@@ -52,7 +41,7 @@ public class HabitacionService {
 
         HabitacionDTO habitacionDTO = modelMapper.map(habitacion, HabitacionDTO.class);
         habitacionDTO.setName(habitacion.getNombre());
-        habitacionDTO.setHomeId(habitacion.getCasa().getId());
+        habitacionDTO.setCasaId(habitacion.getCasa().getId());
         return habitacionDTO;
     }
 
@@ -63,7 +52,7 @@ public class HabitacionService {
                 .map(habitacion -> {
                     HabitacionDTO habitacionDTO = modelMapper.map(habitacion, HabitacionDTO.class);
                     habitacionDTO.setName(habitacion.getNombre());
-                    habitacionDTO.setHomeId(habitacion.getCasa().getId());
+                    habitacionDTO.setCasaId(habitacion.getCasa().getId());
                     return habitacionDTO;
                 })
                 .toList();
@@ -76,7 +65,7 @@ public class HabitacionService {
 
         HabitacionDTO habitacionDTO = modelMapper.map(habitacion, HabitacionDTO.class);
         habitacionDTO.setName(habitacion.getNombre());
-        habitacionDTO.setHomeId(habitacion.getCasa().getId());
+        habitacionDTO.setCasaId(habitacion.getCasa().getId());
         return habitacionDTO;
     }
 
@@ -84,14 +73,17 @@ public class HabitacionService {
     public HabitacionDTO update(Long id, CrearHabitacionDto request) {
         Habitacion habitacion = habitacionRepositorio.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Habitacion no encontrada"));
+        Casa casa = casaRepositorio.findById(request.getCasaId())
+                .orElseThrow(() -> new ResourceNotFoundException("Casa no encontrada"));
 
         modelMapper.map(request, habitacion);
         habitacion.setNombre(request.getNombre().trim());
+        habitacion.setCasa(casa);
         habitacion = habitacionRepositorio.save(habitacion);
 
         HabitacionDTO habitacionDTO = modelMapper.map(habitacion, HabitacionDTO.class);
         habitacionDTO.setName(habitacion.getNombre());
-        habitacionDTO.setHomeId(habitacion.getCasa().getId());
+        habitacionDTO.setCasaId(habitacion.getCasa().getId());
         return habitacionDTO;
     }
 
