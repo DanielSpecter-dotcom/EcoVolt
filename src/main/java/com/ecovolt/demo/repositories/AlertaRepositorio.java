@@ -11,4 +11,6 @@ public interface AlertaRepositorio extends JpaRepository<Alerta, Long> {
     List<Alerta> findByDispositivoHabitacionCasaUsuarioIdOrderByFechaCreacionDesc(Long usuarioId);
 
     Optional<Alerta> findByIdAndDispositivoHabitacionCasaUsuarioId(Long id, Long usuarioId);
+
+    boolean existsByDispositivoIdAndTipoAndLeidoFalse(Long dispositivoId, String tipo);
 }

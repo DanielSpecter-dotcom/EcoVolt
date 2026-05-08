@@ -23,6 +23,8 @@ public class SimuladorEnergiaUtils {
     );
 
     private static final double CONSUMO_DEFAULT_WATTS = 60.0;
+    private static final double WATTS_POR_KILOWATT = 1000.0;
+    private static final double SEGUNDOS_POR_HORA = 3600.0;
     private static final Random random = new Random();
 
     private SimuladorEnergiaUtils() {
@@ -37,9 +39,14 @@ public class SimuladorEnergiaUtils {
     }
 
     public static double calcularConsumoIntervalo(Double watts, int segundos) {
+        if (segundos <= 0) {
+            return 0;
+        }
+
         double potenciaWatts = watts == null || watts <= 0 ? CONSUMO_DEFAULT_WATTS : watts;
         double variacion = 1 + ((random.nextDouble() * 0.1) - 0.05);
-        return (potenciaWatts * variacion * (segundos / 3600.0)) / 1000.0;
+        double horas = segundos / SEGUNDOS_POR_HORA;
+        return (potenciaWatts * variacion * horas) / WATTS_POR_KILOWATT;
     }
 
     private static String normalizarTipo(String tipo) {
