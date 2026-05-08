@@ -33,26 +33,26 @@ public class HabitacionController {
     @Operation(summary = "Crear un nuevo ambiente")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Ambiente creado")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Usuario no encontrado")
-    @PostMapping
+    @PostMapping("/insertarhabitacion")
     public ResponseEntity<RespuestaApi<HabitacionDTO>> create(@Valid @RequestBody CrearHabitacionDto request) {
         HabitacionDTO data = habitacionService.create(request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new RespuestaApi<>(true, "Ambiente creado exitosamente", data));
     }
 
-    @GetMapping
+    @GetMapping("/listarhabitaciones")
     public ResponseEntity<RespuestaApi<List<HabitacionDTO>>> findAll() {
         List<HabitacionDTO> data = habitacionService.findAll();
         return ResponseEntity.ok(new RespuestaApi<>(true, "Ambientes obtenidos exitosamente", data));
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/encontrarhabitacion/{id}")
     public ResponseEntity<RespuestaApi<HabitacionDTO>> findById(@PathVariable Long id) {
         HabitacionDTO data = habitacionService.findById(id);
         return ResponseEntity.ok(new RespuestaApi<>(true, "Ambiente obtenido exitosamente", data));
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/actualizarhabitacion/{id}")
     public ResponseEntity<RespuestaApi<HabitacionDTO>> update(
             @PathVariable Long id,
             @Valid @RequestBody CrearHabitacionDto request) {
@@ -60,7 +60,7 @@ public class HabitacionController {
         return ResponseEntity.ok(new RespuestaApi<>(true, "Ambiente actualizado exitosamente", data));
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/eliminarhabitacion/{id}")
     public ResponseEntity<RespuestaApi<Void>> delete(@PathVariable Long id) {
         habitacionService.delete(id);
         return ResponseEntity.ok(new RespuestaApi<>(true, "Ambiente eliminado exitosamente", null));

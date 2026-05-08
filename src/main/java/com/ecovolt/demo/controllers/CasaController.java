@@ -29,26 +29,26 @@ public class CasaController {
     @Autowired
     private CasaService casaService;
 
-    @PostMapping
+    @PostMapping("/insertarcasa")
     public ResponseEntity<RespuestaApi<CasaDTO>> create(@RequestBody CasaDTO request) {
         CasaDTO data = casaService.create(request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new RespuestaApi<>(true, "Casa creada exitosamente", data));
     }
 
-    @GetMapping
+    @GetMapping("/listarcasas")
     public ResponseEntity<RespuestaApi<List<CasaDTO>>> findAll() {
         List<CasaDTO> data = casaService.findAll();
         return ResponseEntity.ok(new RespuestaApi<>(true, "Casas obtenidas exitosamente", data));
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/encontrarcasa/{id}")
     public ResponseEntity<RespuestaApi<CasaDTO>> findById(@PathVariable Long id) {
         CasaDTO data = casaService.findById(id);
         return ResponseEntity.ok(new RespuestaApi<>(true, "Casa obtenida exitosamente", data));
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/actualizarcasa/{id}")
     public ResponseEntity<RespuestaApi<CasaDTO>> update(
             @PathVariable Long id,
             @RequestBody CasaDTO request) {
@@ -56,7 +56,7 @@ public class CasaController {
         return ResponseEntity.ok(new RespuestaApi<>(true, "Casa actualizada exitosamente", data));
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/eliminarcasa/{id}")
     public ResponseEntity<RespuestaApi<Void>> delete(@PathVariable Long id) {
         casaService.delete(id);
         return ResponseEntity.ok(new RespuestaApi<>(true, "Casa eliminada exitosamente", null));

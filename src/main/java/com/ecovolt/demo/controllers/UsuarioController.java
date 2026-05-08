@@ -31,26 +31,26 @@ public class UsuarioController {
     @Autowired
     private UsuarioService usuarioService;
 
-    @PostMapping
+    @PostMapping("/insertarusuario")
     public ResponseEntity<RespuestaApi<UsuarioDTO>> create(@RequestBody Usuario request) {
         UsuarioDTO data = usuarioService.create(request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new RespuestaApi<>(true, "Usuario creado exitosamente", data));
     }
 
-    @GetMapping
+    @GetMapping("/listarusuarios")
     public ResponseEntity<RespuestaApi<List<UsuarioDTO>>> findAll() {
         List<UsuarioDTO> data = usuarioService.findAll();
         return ResponseEntity.ok(new RespuestaApi<>(true, "Usuarios obtenidos exitosamente", data));
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/encontrarusuario/{id}")
     public ResponseEntity<RespuestaApi<UsuarioDTO>> findById(@PathVariable Long id) {
         UsuarioDTO data = usuarioService.findById(id);
         return ResponseEntity.ok(new RespuestaApi<>(true, "Usuario obtenido exitosamente", data));
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/actualizarusuario/{id}")
     public ResponseEntity<RespuestaApi<UsuarioDTO>> updateProfile(
             @PathVariable Long id,
             @Valid @RequestBody ActualizarPerfilUsuarioDto request) {
