@@ -89,8 +89,9 @@ public class HabitacionService {
 
     @Transactional
     public void delete(Long id) {
-        if (habitacionRepositorio.existsById(id)) {
-            habitacionRepositorio.deleteById(id);
+        if (!habitacionRepositorio.existsById(id)) {
+            throw new ResourceNotFoundException("Habitacion no encontrada");
         }
+        habitacionRepositorio.deleteById(id);
     }
 }

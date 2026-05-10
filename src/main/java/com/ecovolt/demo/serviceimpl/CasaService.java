@@ -83,9 +83,10 @@ public class CasaService {
     }
 
     public void delete(Long id) {
-        if (casaRepositorio.existsById(id)) {
-            casaRepositorio.deleteById(id);
+        if (!casaRepositorio.existsById(id)) {
+            throw new ResourceNotFoundException("Casa no encontrada");
         }
+        casaRepositorio.deleteById(id);
     }
 
     public ModoAusenteRespuestaDto updateAwayMode(Long homeId, ModoAusenteDto request) {
