@@ -133,11 +133,20 @@ public class AutenticacionService {
 
     @Transactional
     public void verifyEmail(VerificarCorreoDto request) {
-        Usuario usuario = usuarioRepositorio.findByVerificationToken(request.getToken())
-                .orElseThrow(() -> new BadRequestException("El token de verificacion no es valido"));
+        Usuario usuario = usuarioRepositorio.findByCorreo(normalizeEmail(request.getCorreo()))
+                .orElseThrow(() -> new ResourceNotFoundException("No existe un usuario con el correo indicado"));
 
-        if (!isVerificationTokenValid(request.getToken(), usuario)) {
-            throw new BadRequestException("El token de verificacion ha expirado");
+        if (usuario.isActivo()) {
+            throw new BadRequestException("La cuenta ya se encuentra activa");
+        }
+
+        if (usuario.getVerificationToken() == null || !usuario.getVerificationToken().equals(request.getCodigo())) {
+            throw new BadRequestException("El codigo de verificacion no es valido");
+        }
+
+        if (usuario.getVerificationTokenExpiresAt() == null || 
+            usuario.getVerificationTokenExpiresAt().isBefore(LocalDateTime.now())) {
+            throw new BadRequestException("El codigo de verificacion ha expirado");
         }
 
         usuario.setActivo(true);
@@ -212,7 +221,7 @@ public class AutenticacionService {
     }
 
     private VerificacionEnviadaRespuestaDto simulateVerificationEmail(Usuario usuario) {
-        String link = "/api/v1/auth/verify-email?token=" + usuario.getVerificationToken();
+        String link = "/api/v1/auth/verify-email?email=" + usuario.getCorreo() + "&code=" + usuario.getVerificationToken();
         return new VerificacionEnviadaRespuestaDto(
                 usuario.getCorreo(),
                 usuario.getVerificationToken(),
@@ -222,22 +231,15 @@ public class AutenticacionService {
     }
 
     private void assignVerificationToken(Usuario usuario) {
-        String token = jwtService.generateEmailVerificationToken(
-                usuario.getCorreo(),
-                VERIFICATION_TOKEN_EXPIRATION_MILLIS
-        );
-        usuario.setVerificationToken(token);
-        usuario.setVerificationTokenExpiresAt(LocalDateTime.ofInstant(
-                jwtService.extractExpiration(token).toInstant(),
-                ZoneId.systemDefault()
-        ));
-    }
-
-    private boolean isVerificationTokenValid(String token, Usuario usuario) {
         try {
-            return jwtService.isEmailVerificationTokenValid(token, usuario.getCorreo());
-        } catch (RuntimeException ex) {
-            return false;
+            java.security.SecureRandom secureRandom = java.security.SecureRandom.getInstanceStrong();
+            String codigo = String.format("%06d", secureRandom.nextInt(1000000));
+            usuario.setVerificationToken(codigo);
+            usuario.setVerificationTokenExpiresAt(LocalDateTime.now().plusHours(TOKEN_EXPIRATION_HOURS));
+        } catch (java.security.NoSuchAlgorithmException e) {
+            String codigo = String.format("%06d", new java.util.Random().nextInt(1000000));
+            usuario.setVerificationToken(codigo);
+            usuario.setVerificationTokenExpiresAt(LocalDateTime.now().plusHours(TOKEN_EXPIRATION_HOURS));
         }
     }
 

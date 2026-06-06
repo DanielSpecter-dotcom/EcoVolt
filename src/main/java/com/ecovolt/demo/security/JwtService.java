@@ -18,7 +18,6 @@ import java.util.function.Function;
 public class JwtService {
 
     private static final String TOKEN_TYPE_CLAIM = "token_type";
-    private static final String EMAIL_VERIFICATION_TOKEN_TYPE = "email_verification";
     private static final String ACCESS_TOKEN_TYPE = "access";
 
     private final SecretKey secretKey;
@@ -48,15 +47,6 @@ public class JwtService {
                 .compact();
     }
 
-    public String generateEmailVerificationToken(String correo, long expirationMillis) {
-        return Jwts.builder()
-                .claims(Map.of(TOKEN_TYPE_CLAIM, EMAIL_VERIFICATION_TOKEN_TYPE))
-                .subject(correo)
-                .issuedAt(Date.from(Instant.now()))
-                .expiration(Date.from(Instant.now().plusMillis(expirationMillis)))
-                .signWith(secretKey)
-                .compact();
-    }
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
@@ -80,16 +70,6 @@ public class JwtService {
                 && ACCESS_TOKEN_TYPE.equals(tokenType);
     }
 
-    public boolean isEmailVerificationTokenValid(String token, String correo) {
-        Claims claims = extractAllClaims(token);
-        String subject = claims.getSubject();
-        String tokenType = claims.get(TOKEN_TYPE_CLAIM, String.class);
-        Date expiration = claims.getExpiration();
-
-        return correo.equals(subject)
-                && EMAIL_VERIFICATION_TOKEN_TYPE.equals(tokenType)
-                && expiration.after(new Date());
-    }
 
     private boolean isTokenExpired(String token) {
         return extractClaim(token, Claims::getExpiration).before(new Date());

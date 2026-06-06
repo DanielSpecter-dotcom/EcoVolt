@@ -65,7 +65,8 @@ POST /api/v1/auth/verify-email
 
 ```json
 {
-  "token": "{{verification_token}}"
+  "correo": "usuario@ejemplo.com",
+  "codigo": "123456"
 }
 ```
 

@@ -27,10 +27,4 @@ public class Casa {
     // "mappedBy" apunta a la variable 'casa' en Habitacion
     @OneToMany(mappedBy = "casa", cascade = CascadeType.ALL)
     private List<Habitacion> habitaciones;
-
-    //holaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa :P
-    //Como tas Copil?
-    //Mal borra tu word porfa :((((((((((((
-    //xd
-    //habla a la siguiente ponemos origin main tu diras
 }
