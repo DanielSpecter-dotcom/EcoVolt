@@ -141,6 +141,15 @@ public class UsuarioService {
         return usuarioDTO;
     }
 
+    @Transactional(readOnly = true)
+    public UsuarioDTO findByCorreo(String correo) {
+        Usuario usuario = usuarioRepositorio.findByCorreo(correo)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
+        UsuarioDTO usuarioDTO = modelMapper.map(usuario, UsuarioDTO.class);
+        usuarioDTO.setRoles(usuario.getRoles().stream().map(Rol::getNombre).sorted().toList());
+        return usuarioDTO;
+    }
+
     private Usuario findUser(Long id) {
         return usuarioRepositorio.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));

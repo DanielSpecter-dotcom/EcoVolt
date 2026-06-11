@@ -19,6 +19,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import com.ecovolt.demo.security.CustomUserDetails;
 import java.util.List;
 
 @RestController
@@ -36,8 +38,8 @@ public class RutinaController {
     }
 
     @GetMapping
-    public ResponseEntity<RespuestaApi<List<RutinaDTO>>> findAll() {
-        List<RutinaDTO> data = rutinaService.findAll();
+    public ResponseEntity<RespuestaApi<List<RutinaDTO>>> findAll(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        List<RutinaDTO> data = rutinaService.findAll(userDetails.getId());
         return ResponseEntity.ok(new RespuestaApi<>(true, "Rutinas obtenidas exitosamente", data));
     }
 

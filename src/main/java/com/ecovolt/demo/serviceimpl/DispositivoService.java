@@ -143,8 +143,8 @@ public class DispositivoService {
     }
 
     @Transactional(readOnly = true)
-    public List<DispositivoDTO> findAll() {
-        return dispositivoVirtualRepositorio.findByEliminadoFalseOrderByIdAsc()
+    public List<DispositivoDTO> findAll(Long usuarioId) {
+        return dispositivoVirtualRepositorio.findByHabitacionCasaUsuarioIdAndEliminadoFalseOrderByIdAsc(usuarioId)
                 .stream()
                 .map(dispositivo -> {
                     DispositivoDTO dispositivoDTO = modelMapper.map(dispositivo, DispositivoDTO.class);

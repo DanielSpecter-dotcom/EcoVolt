@@ -49,8 +49,8 @@ public class CasaService {
     }
 
     @Transactional(readOnly = true)
-    public List<CasaDTO> findAll() {
-        return casaRepositorio.findAll()
+    public List<CasaDTO> findAll(Long usuarioId) {
+        return casaRepositorio.findByUsuarioIdOrderByIdAsc(usuarioId)
                 .stream()
                 .map(casa -> {
                     CasaDTO casaDTO = modelMapper.map(casa, CasaDTO.class);

@@ -58,8 +58,8 @@ public class AlertaService {
     }
 
     @Transactional(readOnly = true)
-    public List<AlertaDTO> findAll() {
-        return alertaRepositorio.findAll()
+    public List<AlertaDTO> findAll(Long usuarioId) {
+        return alertaRepositorio.findByDispositivoHabitacionCasaUsuarioIdOrderByFechaCreacionDesc(usuarioId)
                 .stream()
                 .map(alerta -> {
                     AlertaDTO alertaDTO = modelMapper.map(alerta, AlertaDTO.class);

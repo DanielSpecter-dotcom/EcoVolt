@@ -57,8 +57,8 @@ public class ConsumoService {
     }
 
     @Transactional(readOnly = true)
-    public List<HistoricoDTO> findAll() {
-        return historicoRepositorio.findAll()
+    public List<HistoricoDTO> findAll(Long usuarioId) {
+        return historicoRepositorio.findByDispositivoHabitacionCasaUsuarioIdOrderByFechaRegistroDesc(usuarioId)
                 .stream()
                 .map(historico -> {
                     HistoricoDTO historicoDTO = modelMapper.map(historico, HistoricoDTO.class);

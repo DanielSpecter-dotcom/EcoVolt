@@ -46,8 +46,8 @@ public class HabitacionService {
     }
 
     @Transactional(readOnly = true)
-    public List<HabitacionDTO> findAll() {
-        return habitacionRepositorio.findAll()
+    public List<HabitacionDTO> findAll(Long usuarioId) {
+        return habitacionRepositorio.findByCasaUsuarioIdOrderByIdAsc(usuarioId)
                 .stream()
                 .map(habitacion -> {
                     HabitacionDTO habitacionDTO = modelMapper.map(habitacion, HabitacionDTO.class);

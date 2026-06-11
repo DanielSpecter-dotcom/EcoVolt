@@ -14,6 +14,8 @@ public interface RoutineService {
     // Debe retornar las rutinas visibles para el dashboard.
     List<RutinaDTO> findAll();
 
+    List<RutinaDTO> findAll(Long usuarioId);
+
     RutinaDTO findById(Long routineId);
 
     // Debe aplicar cambios parciales, incluida la pausa mediante enabled=false.

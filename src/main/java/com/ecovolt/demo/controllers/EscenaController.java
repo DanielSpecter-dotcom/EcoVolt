@@ -19,6 +19,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import com.ecovolt.demo.security.CustomUserDetails;
 import java.util.List;
 
 @RestController
@@ -36,8 +38,8 @@ public class EscenaController {
     }
 
     @GetMapping
-    public ResponseEntity<RespuestaApi<List<EscenaDTO>>> findAll() {
-        List<EscenaDTO> data = escenaService.findAll();
+    public ResponseEntity<RespuestaApi<List<EscenaDTO>>> findAll(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        List<EscenaDTO> data = escenaService.findAll(userDetails.getId());
         return ResponseEntity.ok(new RespuestaApi<>(true, "Escenas obtenidas exitosamente", data));
     }
 

@@ -15,4 +15,6 @@ public interface DispositivoVirtualRepositorio extends JpaRepository<Dispositivo
     Optional<DispositivoVirtual> findByIdAndEliminadoFalse(Long id);
 
     List<DispositivoVirtual> findByEliminadoFalseOrderByIdAsc();
+
+    List<DispositivoVirtual> findByHabitacionCasaUsuarioIdAndEliminadoFalseOrderByIdAsc(Long usuarioId);
 }

@@ -8,6 +8,9 @@ import com.ecovolt.demo.exceptions.ResourceNotFoundException;
 import com.ecovolt.demo.services.SceneService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.beans.factory.annotation.Autowired;
+import com.ecovolt.demo.repositories.DispositivoVirtualRepositorio;
+import com.ecovolt.demo.entities.DispositivoVirtual;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -18,6 +21,9 @@ import java.util.concurrent.atomic.AtomicLong;
 @Service
 @Transactional
 public class EscenaMemoriaService implements SceneService {
+
+    @Autowired
+    private DispositivoVirtualRepositorio dispositivoVirtualRepositorio;
 
     private final AtomicLong sequence = new AtomicLong(1);
     private final Map<Long, EscenaDTO> scenes = new ConcurrentHashMap<>();
@@ -58,6 +64,23 @@ public class EscenaMemoriaService implements SceneService {
     @Transactional(readOnly = true)
     public List<EscenaDTO> findAll() {
         return scenes.values().stream()
+                .sorted(java.util.Comparator.comparing(EscenaDTO::getId))
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<EscenaDTO> findAll(Long usuarioId) {
+        return scenes.values().stream()
+                .filter(scene -> {
+                    if (scene.getDevices() == null || scene.getDevices().isEmpty()) {
+                        return false;
+                    }
+                    Long deviceId = scene.getDevices().get(0).getDeviceId();
+                    return dispositivoVirtualRepositorio.findById(deviceId)
+                            .map(dev -> dev.getHabitacion().getCasa().getUsuario().getId().equals(usuarioId))
+                            .orElse(false);
+                })
                 .sorted(java.util.Comparator.comparing(EscenaDTO::getId))
                 .toList();
     }

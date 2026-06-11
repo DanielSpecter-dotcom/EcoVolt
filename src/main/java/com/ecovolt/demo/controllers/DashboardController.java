@@ -43,8 +43,9 @@ public class DashboardController {
     }
 
     @GetMapping("/scenes-routines")
-    public ResponseEntity<RespuestaApi<EscenasRutinasPanelDto>> obtenerEscenasRutinas() {
-        EscenasRutinasPanelDto data = dashboardService.obtenerEscenasRutinas();
+    public ResponseEntity<RespuestaApi<EscenasRutinasPanelDto>> obtenerEscenasRutinas(
+            @AuthenticationPrincipal CustomUserDetails usuario) {
+        EscenasRutinasPanelDto data = dashboardService.obtenerEscenasRutinas(usuario.getId());
         return ResponseEntity.ok(new RespuestaApi<>(true, "Escenas y rutinas obtenidas exitosamente", data));
     }
 

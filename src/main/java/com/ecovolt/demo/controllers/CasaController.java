@@ -20,6 +20,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import com.ecovolt.demo.security.CustomUserDetails;
 import java.util.List;
 
 @RestController
@@ -37,8 +39,8 @@ public class CasaController {
     }
 
     @GetMapping("/listarcasas")
-    public ResponseEntity<RespuestaApi<List<CasaDTO>>> findAll() {
-        List<CasaDTO> data = casaService.findAll();
+    public ResponseEntity<RespuestaApi<List<CasaDTO>>> findAll(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        List<CasaDTO> data = casaService.findAll(userDetails.getId());
         return ResponseEntity.ok(new RespuestaApi<>(true, "Casas obtenidas exitosamente", data));
     }
 

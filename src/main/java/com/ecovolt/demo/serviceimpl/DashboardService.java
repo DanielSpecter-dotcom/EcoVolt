@@ -113,11 +113,11 @@ public class DashboardService {
         return respuesta;
     }
 
-    public EscenasRutinasPanelDto obtenerEscenasRutinas() {
+    public EscenasRutinasPanelDto obtenerEscenasRutinas(Long usuarioId) {
         List<EscenaRutinaPanelDto> escenas = new ArrayList<>();
         List<EscenaRutinaPanelDto> rutinas = new ArrayList<>();
 
-        for (EscenaDTO escena : escenaService.findAll()) {
+        for (EscenaDTO escena : escenaService.findAll(usuarioId)) {
             escenas.add(new EscenaRutinaPanelDto(
                     escena.getId(),
                     escena.getName(),
@@ -126,7 +126,7 @@ public class DashboardService {
             ));
         }
 
-        for (RutinaDTO rutina : rutinaService.findAll()) {
+        for (RutinaDTO rutina : rutinaService.findAll(usuarioId)) {
             String estado = obtenerEstadoRutina(rutina);
             rutinas.add(new EscenaRutinaPanelDto(
                     rutina.getId(),

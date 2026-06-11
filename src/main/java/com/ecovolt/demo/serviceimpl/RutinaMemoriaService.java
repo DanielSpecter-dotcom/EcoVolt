@@ -8,6 +8,9 @@ import com.ecovolt.demo.exceptions.ResourceNotFoundException;
 import com.ecovolt.demo.services.RoutineService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.beans.factory.annotation.Autowired;
+import com.ecovolt.demo.repositories.CasaRepositorio;
+import com.ecovolt.demo.entities.Casa;
 
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -18,6 +21,9 @@ import java.util.concurrent.atomic.AtomicLong;
 @Service
 @Transactional
 public class RutinaMemoriaService implements RoutineService {
+
+    @Autowired
+    private CasaRepositorio casaRepositorio;
 
     private final AtomicLong sequence = new AtomicLong(1);
     private final Map<Long, RutinaDTO> routines = new ConcurrentHashMap<>();
@@ -48,6 +54,18 @@ public class RutinaMemoriaService implements RoutineService {
     @Transactional(readOnly = true)
     public List<RutinaDTO> findAll() {
         return routines.values().stream()
+                .sorted(java.util.Comparator.comparing(RutinaDTO::getId))
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<RutinaDTO> findAll(Long usuarioId) {
+        List<Long> userHomeIds = casaRepositorio.findByUsuarioIdOrderByIdAsc(usuarioId).stream()
+                .map(Casa::getId)
+                .toList();
+        return routines.values().stream()
+                .filter(r -> userHomeIds.contains(r.getHomeId()))
                 .sorted(java.util.Comparator.comparing(RutinaDTO::getId))
                 .toList();
     }

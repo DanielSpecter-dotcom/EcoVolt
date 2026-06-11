@@ -13,6 +13,7 @@ import com.ecovolt.demo.serviceimpl.UsuarioService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -111,5 +112,12 @@ public class UsuarioController {
     public ResponseEntity<RespuestaApi<Void>> deleteRole(@PathVariable Long id) {
         usuarioService.deleteRole(id);
         return ResponseEntity.ok(new RespuestaApi<>(true, "Rol eliminado exitosamente", null));
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<RespuestaApi<UsuarioDTO>> getCurrentUser(Authentication authentication) {
+        String correo = authentication.getName(); // extrae el "sub" del JWT (que es el correo)
+        UsuarioDTO dto = usuarioService.findByCorreo(correo);
+        return ResponseEntity.ok(new RespuestaApi<>(true, "Usuario autenticado", dto));
     }
 }

@@ -25,6 +25,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import com.ecovolt.demo.security.CustomUserDetails;
 import java.util.List;
 
 @RestController
@@ -47,8 +49,8 @@ public class DispositivoController {
     @Operation(summary = "Listar dispositivos", description = "Lista todos los dispositivos no eliminados con su estado actual")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Dispositivos obtenidos")
     @GetMapping({"", "/listar"})
-    public ResponseEntity<RespuestaApi<List<DispositivoDTO>>> findAll() {
-        List<DispositivoDTO> data = dispositivoService.findAll();
+    public ResponseEntity<RespuestaApi<List<DispositivoDTO>>> findAll(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        List<DispositivoDTO> data = dispositivoService.findAll(userDetails.getId());
         return ResponseEntity.ok(new RespuestaApi<>(true, "Dispositivos obtenidos exitosamente", data));
     }
 

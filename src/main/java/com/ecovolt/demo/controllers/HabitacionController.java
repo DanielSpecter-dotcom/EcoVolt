@@ -20,6 +20,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import com.ecovolt.demo.security.CustomUserDetails;
 import java.util.List;
 
 @RestController
@@ -41,8 +43,8 @@ public class HabitacionController {
     }
 
     @GetMapping("/listarhabitaciones")
-    public ResponseEntity<RespuestaApi<List<HabitacionDTO>>> findAll() {
-        List<HabitacionDTO> data = habitacionService.findAll();
+    public ResponseEntity<RespuestaApi<List<HabitacionDTO>>> findAll(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        List<HabitacionDTO> data = habitacionService.findAll(userDetails.getId());
         return ResponseEntity.ok(new RespuestaApi<>(true, "Ambientes obtenidos exitosamente", data));
     }
 

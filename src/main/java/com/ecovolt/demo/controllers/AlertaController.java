@@ -42,8 +42,8 @@ public class AlertaController {
     }
 
     @GetMapping
-    public ResponseEntity<RespuestaApi<List<AlertaDTO>>> findAll() {
-        List<AlertaDTO> respuesta = alertaService.findAll();
+    public ResponseEntity<RespuestaApi<List<AlertaDTO>>> findAll(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        List<AlertaDTO> respuesta = alertaService.findAll(userDetails.getId());
         return ResponseEntity.ok(new RespuestaApi<>(true, "Alertas obtenidas exitosamente", respuesta));
     }
 

@@ -38,8 +38,8 @@ public class ConsumoController {
     }
 
     @GetMapping("/history")
-    public ResponseEntity<RespuestaApi<List<HistoricoDTO>>> findAll() {
-        List<HistoricoDTO> data = consumoService.findAll();
+    public ResponseEntity<RespuestaApi<List<HistoricoDTO>>> findAll(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        List<HistoricoDTO> data = consumoService.findAll(userDetails.getId());
         return ResponseEntity.ok(new RespuestaApi<>(true, "Historicos obtenidos exitosamente", data));
     }
 

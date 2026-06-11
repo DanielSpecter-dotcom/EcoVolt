@@ -17,6 +17,8 @@ public interface SceneService {
     // Debe retornar las escenas visibles para el dashboard.
     List<EscenaDTO> findAll();
 
+    List<EscenaDTO> findAll(Long usuarioId);
+
     EscenaDTO findById(Long sceneId);
 
     EscenaDTO update(Long sceneId, CrearEscenaDto request);
