@@ -35,11 +35,10 @@ public class SecurityConfig {
                                 "/api/v1/auth/**",
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
-                                "/swagger-ui.html",
-                                "/**"
-                        ).permitAll())
+                                "/swagger-ui.html"
+                        ).permitAll()
                         // Endpoints del propietario protegidos por rol.
-                       /*.requestMatchers(
+                        .requestMatchers(
                                 "/api/v1/consumption",
                                 "/api/v1/consumption/**",
                                 "/api/v1/reports",
@@ -54,7 +53,7 @@ public class SecurityConfig {
                         ).hasAnyRole("PERSONAL", "EMPRESARIAL")
                         .anyRequest().authenticated()
                 )
-                .authenticationProvider(authenticationProvider()) */
+                .authenticationProvider(authenticationProvider())
                 // El filtro JWT valida el Bearer token antes del filtro de username/password.
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
