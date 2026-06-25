@@ -11,4 +11,6 @@ public interface CasaRepositorio extends JpaRepository<Casa, Long> {
     Optional<Casa> findFirstByUsuarioIdOrderByIdAsc(Long usuarioId);
 
     List<Casa> findByUsuarioIdOrderByIdAsc(Long usuarioId);
+
+    long countByUsuarioId(Long usuarioId);
 }

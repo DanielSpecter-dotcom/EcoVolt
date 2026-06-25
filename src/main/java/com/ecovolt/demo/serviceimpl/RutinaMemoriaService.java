@@ -4,6 +4,7 @@ import com.ecovolt.demo.dtos.CrearRutinaDto;
 import com.ecovolt.demo.dtos.ActualizarRutinaDto;
 import com.ecovolt.demo.dtos.AccionRutinaDTO;
 import com.ecovolt.demo.dtos.RutinaDTO;
+import com.ecovolt.demo.exceptions.BadRequestException;
 import com.ecovolt.demo.exceptions.ResourceNotFoundException;
 import com.ecovolt.demo.services.RoutineService;
 import org.springframework.stereotype.Service;
@@ -29,7 +30,11 @@ public class RutinaMemoriaService implements RoutineService {
     private final Map<Long, RutinaDTO> routines = new ConcurrentHashMap<>();
 
     @Override
-    public RutinaDTO create(CrearRutinaDto request) {
+    public RutinaDTO create(CrearRutinaDto request, Long usuarioId) {
+        if (!perteneceAlUsuario(request.getHomeId(), usuarioId)) {
+            throw new BadRequestException("La casa indicada no pertenece al usuario autenticado");
+        }
+
         RutinaDTO response = RutinaDTO.builder()
                 .id(sequence.getAndIncrement())
                 .homeId(request.getHomeId())
@@ -72,13 +77,17 @@ public class RutinaMemoriaService implements RoutineService {
 
     @Override
     @Transactional(readOnly = true)
-    public RutinaDTO findById(Long routineId) {
-        return findRoutine(routineId);
+    public RutinaDTO findById(Long routineId, Long usuarioId) {
+        return findRoutine(routineId, usuarioId);
     }
 
     @Override
-    public RutinaDTO update(Long routineId, ActualizarRutinaDto request) {
-        RutinaDTO routine = findRoutine(routineId);
+    public RutinaDTO update(Long routineId, ActualizarRutinaDto request, Long usuarioId) {
+        RutinaDTO routine = findRoutine(routineId, usuarioId);
+
+        if (request.getHomeId() != null && !perteneceAlUsuario(request.getHomeId(), usuarioId)) {
+            throw new BadRequestException("La casa indicada no pertenece al usuario autenticado");
+        }
 
         /*
          * La implementacion productiva debe persistir cambios parciales:
@@ -114,10 +123,9 @@ public class RutinaMemoriaService implements RoutineService {
     }
 
     @Override
-    public void delete(Long routineId) {
-        if (routines.remove(routineId) == null) {
-            throw new ResourceNotFoundException("Rutina no encontrada");
-        }
+    public void delete(Long routineId, Long usuarioId) {
+        findRoutine(routineId, usuarioId);
+        routines.remove(routineId);
     }
 
     @Override
@@ -137,11 +145,17 @@ public class RutinaMemoriaService implements RoutineService {
         return updated;
     }
 
-    private RutinaDTO findRoutine(Long routineId) {
+    private RutinaDTO findRoutine(Long routineId, Long usuarioId) {
         RutinaDTO routine = routines.get(routineId);
-        if (routine == null) {
+        if (routine == null || !perteneceAlUsuario(routine.getHomeId(), usuarioId)) {
             throw new ResourceNotFoundException("Rutina no encontrada");
         }
         return routine;
+    }
+
+    private boolean perteneceAlUsuario(Long homeId, Long usuarioId) {
+        return casaRepositorio.findById(homeId)
+                .map(casa -> casa.getUsuario().getId().equals(usuarioId))
+                .orElse(false);
     }
 }

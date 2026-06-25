@@ -32,8 +32,10 @@ public class CasaController {
     private CasaService casaService;
 
     @PostMapping("/insertarcasa")
-    public ResponseEntity<RespuestaApi<CasaDTO>> create(@RequestBody CasaDTO request) {
-        CasaDTO data = casaService.create(request);
+    public ResponseEntity<RespuestaApi<CasaDTO>> create(
+            @RequestBody CasaDTO request,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        CasaDTO data = casaService.create(request, userDetails.getId());
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new RespuestaApi<>(true, "Casa creada exitosamente", data));
     }
@@ -45,30 +47,36 @@ public class CasaController {
     }
 
     @GetMapping("/encontrarcasa/{id}")
-    public ResponseEntity<RespuestaApi<CasaDTO>> findById(@PathVariable Long id) {
-        CasaDTO data = casaService.findById(id);
+    public ResponseEntity<RespuestaApi<CasaDTO>> findById(
+            @PathVariable Long id,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        CasaDTO data = casaService.findById(id, userDetails.getId());
         return ResponseEntity.ok(new RespuestaApi<>(true, "Casa obtenida exitosamente", data));
     }
 
     @PutMapping("/actualizarcasa/{id}")
     public ResponseEntity<RespuestaApi<CasaDTO>> update(
             @PathVariable Long id,
-            @RequestBody CasaDTO request) {
-        CasaDTO data = casaService.update(id, request);
+            @RequestBody CasaDTO request,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        CasaDTO data = casaService.update(id, request, userDetails.getId());
         return ResponseEntity.ok(new RespuestaApi<>(true, "Casa actualizada exitosamente", data));
     }
 
     @DeleteMapping("/eliminarcasa/{id}")
-    public ResponseEntity<RespuestaApi<Void>> delete(@PathVariable Long id) {
-        casaService.delete(id);
+    public ResponseEntity<RespuestaApi<Void>> delete(
+            @PathVariable Long id,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        casaService.delete(id, userDetails.getId());
         return ResponseEntity.ok(new RespuestaApi<>(true, "Casa eliminada exitosamente", null));
     }
 
     @PatchMapping("/{id}/away-mode")
     public ResponseEntity<RespuestaApi<ModoAusenteRespuestaDto>> updateAwayMode(
             @PathVariable Long id,
-            @Valid @RequestBody ModoAusenteDto request) {
-        ModoAusenteRespuestaDto data = casaService.updateAwayMode(id, request);
+            @Valid @RequestBody ModoAusenteDto request,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        ModoAusenteRespuestaDto data = casaService.updateAwayMode(id, request, userDetails.getId());
         return ResponseEntity.ok(new RespuestaApi<>(true, "Modo ausente actualizado exitosamente", data));
     }
 }
