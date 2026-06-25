@@ -40,8 +40,8 @@ public class AlertaService {
     }
 
     @Transactional
-    public AlertaDTO create(AlertaDTO request) {
-        DispositivoVirtual dispositivo = findDevice(request.getDeviceId());
+    public AlertaDTO create(AlertaDTO request, Long usuarioId) {
+        DispositivoVirtual dispositivo = findDevice(request.getDeviceId(), usuarioId);
         Alerta alerta = modelMapper.map(request, Alerta.class);
 
         alerta.setId(null);
@@ -71,8 +71,8 @@ public class AlertaService {
     }
 
     @Transactional(readOnly = true)
-    public AlertaDTO findById(Long id) {
-        Alerta alerta = findAlert(id);
+    public AlertaDTO findById(Long id, Long usuarioId) {
+        Alerta alerta = findAlert(id, usuarioId);
         AlertaDTO alertaDTO = modelMapper.map(alerta, AlertaDTO.class);
         alertaDTO.setDeviceId(alerta.getDispositivo() == null ? null : alerta.getDispositivo().getId());
         alertaDTO.setDeviceName(alerta.getDispositivo() == null ? null : alerta.getDispositivo().getNombre());
@@ -149,9 +149,9 @@ public class AlertaService {
     }
 
     @Transactional
-    public AlertaDTO update(Long id, AlertaDTO request) {
-        Alerta alerta = findAlert(id);
-        DispositivoVirtual dispositivo = findDevice(request.getDeviceId());
+    public AlertaDTO update(Long id, AlertaDTO request, Long usuarioId) {
+        Alerta alerta = findAlert(id, usuarioId);
+        DispositivoVirtual dispositivo = findDevice(request.getDeviceId(), usuarioId);
         LocalDateTime fechaActual = alerta.getFechaCreacion();
 
         modelMapper.map(request, alerta);
@@ -171,8 +171,8 @@ public class AlertaService {
     }
 
     @Transactional
-    public void delete(Long id) {
-        Alerta alerta = findAlert(id);
+    public void delete(Long id, Long usuarioId) {
+        Alerta alerta = findAlert(id, usuarioId);
         alertaRepositorio.delete(alerta);
     }
 
@@ -212,17 +212,17 @@ public class AlertaService {
                 .build());
     }
 
-    private Alerta findAlert(Long id) {
-        return alertaRepositorio.findById(id)
+    private Alerta findAlert(Long id, Long usuarioId) {
+        return alertaRepositorio.findByIdAndDispositivoHabitacionCasaUsuarioId(id, usuarioId)
                 .orElseThrow(() -> new ResourceNotFoundException("Alerta no encontrada"));
     }
 
-    private DispositivoVirtual findDevice(Long dispositivoId) {
+    private DispositivoVirtual findDevice(Long dispositivoId, Long usuarioId) {
         if (dispositivoId == null) {
             return null;
         }
 
-        return dispositivoVirtualRepositorio.findById(dispositivoId)
+        return dispositivoVirtualRepositorio.findByIdAndHabitacionCasaUsuarioId(dispositivoId, usuarioId)
                 .orElseThrow(() -> new ResourceNotFoundException("Dispositivo no encontrado"));
     }
 

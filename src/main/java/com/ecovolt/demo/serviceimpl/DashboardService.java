@@ -143,10 +143,10 @@ public class DashboardService {
         return escenaService.activate(escenaId);
     }
 
-    public RutinaDTO pausarRutina(Long rutinaId) {
+    public RutinaDTO pausarRutina(Long rutinaId, Long usuarioId) {
         ActualizarRutinaDto request = new ActualizarRutinaDto();
         request.setHabilitar(false);
-        return rutinaService.update(rutinaId, request);
+        return rutinaService.update(rutinaId, request, usuarioId);
     }
 
     @Transactional(readOnly = true)

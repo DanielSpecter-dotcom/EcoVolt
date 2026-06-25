@@ -35,8 +35,10 @@ public class AlertaController {
     private AlertaService alertaService;
 
     @PostMapping
-    public ResponseEntity<RespuestaApi<AlertaDTO>> create(@RequestBody AlertaDTO request) {
-        AlertaDTO respuesta = alertaService.create(request);
+    public ResponseEntity<RespuestaApi<AlertaDTO>> create(
+            @RequestBody AlertaDTO request,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        AlertaDTO respuesta = alertaService.create(request, userDetails.getId());
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new RespuestaApi<>(true, "Alerta creada exitosamente", respuesta));
     }
@@ -48,22 +50,27 @@ public class AlertaController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<RespuestaApi<AlertaDTO>> findById(@PathVariable Long id) {
-        AlertaDTO respuesta = alertaService.findById(id);
+    public ResponseEntity<RespuestaApi<AlertaDTO>> findById(
+            @PathVariable Long id,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        AlertaDTO respuesta = alertaService.findById(id, userDetails.getId());
         return ResponseEntity.ok(new RespuestaApi<>(true, "Alerta obtenida exitosamente", respuesta));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<RespuestaApi<AlertaDTO>> update(
             @PathVariable Long id,
-            @RequestBody AlertaDTO request) {
-        AlertaDTO respuesta = alertaService.update(id, request);
+            @RequestBody AlertaDTO request,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        AlertaDTO respuesta = alertaService.update(id, request, userDetails.getId());
         return ResponseEntity.ok(new RespuestaApi<>(true, "Alerta actualizada exitosamente", respuesta));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<RespuestaApi<Void>> delete(@PathVariable Long id) {
-        alertaService.delete(id);
+    public ResponseEntity<RespuestaApi<Void>> delete(
+            @PathVariable Long id,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        alertaService.delete(id, userDetails.getId());
         return ResponseEntity.ok(new RespuestaApi<>(true, "Alerta eliminada exitosamente", null));
     }
 

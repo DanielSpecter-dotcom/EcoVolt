@@ -31,8 +31,10 @@ public class RutinaController {
     private RoutineService rutinaService;
 
     @PostMapping
-    public ResponseEntity<RespuestaApi<RutinaDTO>> create(@Valid @RequestBody CrearRutinaDto request) {
-        RutinaDTO data = rutinaService.create(request);
+    public ResponseEntity<RespuestaApi<RutinaDTO>> create(
+            @Valid @RequestBody CrearRutinaDto request,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        RutinaDTO data = rutinaService.create(request, userDetails.getId());
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new RespuestaApi<>(true, "Rutina creada exitosamente", data));
     }
@@ -44,22 +46,27 @@ public class RutinaController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<RespuestaApi<RutinaDTO>> findById(@PathVariable Long id) {
-        RutinaDTO data = rutinaService.findById(id);
+    public ResponseEntity<RespuestaApi<RutinaDTO>> findById(
+            @PathVariable Long id,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        RutinaDTO data = rutinaService.findById(id, userDetails.getId());
         return ResponseEntity.ok(new RespuestaApi<>(true, "Rutina obtenida exitosamente", data));
     }
 
     @PatchMapping("/{id}")
     public ResponseEntity<RespuestaApi<RutinaDTO>> update(
             @PathVariable Long id,
-            @Valid @RequestBody ActualizarRutinaDto request) {
-        RutinaDTO data = rutinaService.update(id, request);
+            @Valid @RequestBody ActualizarRutinaDto request,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        RutinaDTO data = rutinaService.update(id, request, userDetails.getId());
         return ResponseEntity.ok(new RespuestaApi<>(true, "Rutina actualizada exitosamente", data));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<RespuestaApi<Void>> delete(@PathVariable Long id) {
-        rutinaService.delete(id);
+    public ResponseEntity<RespuestaApi<Void>> delete(
+            @PathVariable Long id,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        rutinaService.delete(id, userDetails.getId());
         return ResponseEntity.ok(new RespuestaApi<>(true, "Rutina eliminada exitosamente", null));
     }
 }

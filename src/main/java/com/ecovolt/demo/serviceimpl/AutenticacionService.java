@@ -54,6 +54,7 @@ public class AutenticacionService {
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
     private final ModelMapper modelMapper;
+    private final EmailService emailService;
 
     @Value("${api.token}")
     private String apiToken;
@@ -68,7 +69,8 @@ public class AutenticacionService {
                                 PasswordEncoder passwordEncoder,
                                 AuthenticationManager authenticationManager,
                                 JwtService jwtService,
-                                ModelMapper modelMapper) {
+                                ModelMapper modelMapper,
+                                EmailService emailService) {
         this.usuarioRepositorio = usuarioRepositorio;
         this.rolRepositorio = rolRepositorio;
         this.casaRepositorio = casaRepositorio;
@@ -80,6 +82,7 @@ public class AutenticacionService {
         this.authenticationManager = authenticationManager;
         this.jwtService = jwtService;
         this.modelMapper = modelMapper;
+        this.emailService = emailService;
     }
 
     public InicioSesionRespuestaDto login(InicioSesionSolicitudDto request) {
@@ -128,7 +131,7 @@ public class AutenticacionService {
             createDemoHome(usuarioGuardado);
         }
 
-        return simulateVerificationEmail(usuarioGuardado);
+        return sendVerificationEmail(usuarioGuardado);
     }
 
     @Transactional
@@ -167,7 +170,7 @@ public class AutenticacionService {
         assignVerificationToken(usuario);
         Usuario usuarioGuardado = usuarioRepositorio.save(usuario);
 
-        return simulateVerificationEmail(usuarioGuardado);
+        return sendVerificationEmail(usuarioGuardado);
     }
 
     private void createDemoHome(Usuario usuario) {
@@ -220,13 +223,12 @@ public class AutenticacionService {
                 .build();
     }
 
-    private VerificacionEnviadaRespuestaDto simulateVerificationEmail(Usuario usuario) {
-        String link = "/api/v1/auth/verify-email?email=" + usuario.getCorreo() + "&code=" + usuario.getVerificationToken();
+    private VerificacionEnviadaRespuestaDto sendVerificationEmail(Usuario usuario) {
+        emailService.enviarCodigoVerificacion(usuario.getCorreo(), usuario.getVerificationToken());
+
         return new VerificacionEnviadaRespuestaDto(
                 usuario.getCorreo(),
-                usuario.getVerificationToken(),
-                usuario.getVerificationTokenExpiresAt(),
-                link
+                usuario.getVerificationTokenExpiresAt()
         );
     }
 

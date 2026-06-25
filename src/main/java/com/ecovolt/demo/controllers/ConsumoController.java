@@ -31,8 +31,10 @@ public class ConsumoController {
     private ConsumoService consumoService;
 
     @PostMapping("/history")
-    public ResponseEntity<RespuestaApi<HistoricoDTO>> create(@RequestBody HistoricoDTO request) {
-        HistoricoDTO data = consumoService.create(request);
+    public ResponseEntity<RespuestaApi<HistoricoDTO>> create(
+            @RequestBody HistoricoDTO request,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        HistoricoDTO data = consumoService.create(request, userDetails.getId());
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new RespuestaApi<>(true, "Historico creado exitosamente", data));
     }
@@ -44,22 +46,27 @@ public class ConsumoController {
     }
 
     @GetMapping("/history/{id}")
-    public ResponseEntity<RespuestaApi<HistoricoDTO>> findById(@PathVariable Long id) {
-        HistoricoDTO data = consumoService.findById(id);
+    public ResponseEntity<RespuestaApi<HistoricoDTO>> findById(
+            @PathVariable Long id,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        HistoricoDTO data = consumoService.findById(id, userDetails.getId());
         return ResponseEntity.ok(new RespuestaApi<>(true, "Historico obtenido exitosamente", data));
     }
 
     @PutMapping("/history/{id}")
     public ResponseEntity<RespuestaApi<HistoricoDTO>> update(
             @PathVariable Long id,
-            @RequestBody HistoricoDTO request) {
-        HistoricoDTO data = consumoService.update(id, request);
+            @RequestBody HistoricoDTO request,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        HistoricoDTO data = consumoService.update(id, request, userDetails.getId());
         return ResponseEntity.ok(new RespuestaApi<>(true, "Historico actualizado exitosamente", data));
     }
 
     @DeleteMapping("/history/{id}")
-    public ResponseEntity<RespuestaApi<Void>> delete(@PathVariable Long id) {
-        consumoService.delete(id);
+    public ResponseEntity<RespuestaApi<Void>> delete(
+            @PathVariable Long id,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        consumoService.delete(id, userDetails.getId());
         return ResponseEntity.ok(new RespuestaApi<>(true, "Historico eliminado exitosamente", null));
     }
 

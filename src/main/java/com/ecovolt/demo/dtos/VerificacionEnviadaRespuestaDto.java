@@ -12,12 +12,6 @@ public class VerificacionEnviadaRespuestaDto {
 
     private String correo;
 
-    @JsonProperty("verification_token")
-    private String verificationToken;
-
     @JsonProperty("expires_at")
     private LocalDateTime expiresAt;
-
-    @JsonProperty("verification_link")
-    private String verificationLink;
 }

@@ -42,8 +42,8 @@ public class ConsumoService {
     }
 
     @Transactional
-    public HistoricoDTO create(HistoricoDTO request) {
-        DispositivoVirtual dispositivo = findDevice(request.getDispositivoId());
+    public HistoricoDTO create(HistoricoDTO request, Long usuarioId) {
+        DispositivoVirtual dispositivo = findDevice(request.getDispositivoId(), usuarioId);
         Historico historico = modelMapper.map(request, Historico.class);
 
         historico.setId(null);
@@ -70,8 +70,8 @@ public class ConsumoService {
     }
 
     @Transactional(readOnly = true)
-    public HistoricoDTO findById(Long id) {
-        Historico historico = findHistory(id);
+    public HistoricoDTO findById(Long id, Long usuarioId) {
+        Historico historico = findHistory(id, usuarioId);
         HistoricoDTO historicoDTO = modelMapper.map(historico, HistoricoDTO.class);
         historicoDTO.setDispositivoId(historico.getDispositivo().getId());
         historicoDTO.setDispositivoNombre(historico.getDispositivo().getNombre());
@@ -79,9 +79,9 @@ public class ConsumoService {
     }
 
     @Transactional
-    public HistoricoDTO update(Long id, HistoricoDTO request) {
-        Historico historico = findHistory(id);
-        DispositivoVirtual dispositivo = findDevice(request.getDispositivoId());
+    public HistoricoDTO update(Long id, HistoricoDTO request, Long usuarioId) {
+        Historico historico = findHistory(id, usuarioId);
+        DispositivoVirtual dispositivo = findDevice(request.getDispositivoId(), usuarioId);
 
         modelMapper.map(request, historico);
         historico.setId(id);
@@ -95,8 +95,8 @@ public class ConsumoService {
     }
 
     @Transactional
-    public void delete(Long id) {
-        Historico historico = findHistory(id);
+    public void delete(Long id, Long usuarioId) {
+        Historico historico = findHistory(id, usuarioId);
         historicoRepositorio.delete(historico);
     }
 
@@ -230,17 +230,17 @@ public class ConsumoService {
         return Math.round(value * 100.0) / 100.0;
     }
 
-    private Historico findHistory(Long id) {
-        return historicoRepositorio.findById(id)
+    private Historico findHistory(Long id, Long usuarioId) {
+        return historicoRepositorio.findByIdAndDispositivoHabitacionCasaUsuarioId(id, usuarioId)
                 .orElseThrow(() -> new ResourceNotFoundException("Historico no encontrado"));
     }
 
-    private DispositivoVirtual findDevice(Long dispositivoId) {
+    private DispositivoVirtual findDevice(Long dispositivoId, Long usuarioId) {
         if (dispositivoId == null) {
             throw new ResourceNotFoundException("Dispositivo no encontrado");
         }
 
-        return dispositivoVirtualRepositorio.findById(dispositivoId)
+        return dispositivoVirtualRepositorio.findByIdAndHabitacionCasaUsuarioId(dispositivoId, usuarioId)
                 .orElseThrow(() -> new ResourceNotFoundException("Dispositivo no encontrado"));
     }
 

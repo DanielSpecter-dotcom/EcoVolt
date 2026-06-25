@@ -56,8 +56,10 @@ public class DashboardController {
     }
 
     @PatchMapping("/routines/{id}/pause")
-    public ResponseEntity<RespuestaApi<RutinaDTO>> pausarRutina(@PathVariable Long id) {
-        RutinaDTO data = dashboardService.pausarRutina(id);
+    public ResponseEntity<RespuestaApi<RutinaDTO>> pausarRutina(
+            @PathVariable Long id,
+            @AuthenticationPrincipal CustomUserDetails usuario) {
+        RutinaDTO data = dashboardService.pausarRutina(id, usuario.getId());
         return ResponseEntity.ok(new RespuestaApi<>(true, "Rutina pausada exitosamente", data));
     }
 

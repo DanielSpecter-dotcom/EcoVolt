@@ -1,10 +1,12 @@
 package com.ecovolt.demo.serviceimpl;
 
+import com.ecovolt.demo.Enums.TipoUsuario;
 import com.ecovolt.demo.dtos.ModoAusenteDto;
 import com.ecovolt.demo.dtos.CasaDTO;
 import com.ecovolt.demo.dtos.ModoAusenteRespuestaDto;
 import com.ecovolt.demo.entities.Casa;
 import com.ecovolt.demo.entities.Usuario;
+import com.ecovolt.demo.exceptions.BadRequestException;
 import com.ecovolt.demo.exceptions.ResourceNotFoundException;
 import com.ecovolt.demo.repositories.CasaRepositorio;
 import com.ecovolt.demo.repositories.UsuarioRepositorio;
@@ -34,9 +36,15 @@ public class CasaService {
         this.modelMapper = modelMapper;
     }
 
-    public CasaDTO create(CasaDTO request) {
-        Usuario usuario = usuarioRepositorio.findById(request.getUsuarioId())
+    public CasaDTO create(CasaDTO request, Long usuarioId) {
+        Usuario usuario = usuarioRepositorio.findById(usuarioId)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
+
+        if (usuario.getTipoUsuario() == TipoUsuario.PERSONAL
+                && casaRepositorio.countByUsuarioId(usuarioId) >= 1) {
+            throw new BadRequestException(
+                    "Tu plan Personal permite gestionar 1 sola casa. Actualiza a EcoVolt Empresarial para administrar mas propiedades.");
+        }
 
         Casa casa = modelMapper.map(request, Casa.class);
         casa.setId(null);
@@ -61,15 +69,15 @@ public class CasaService {
     }
 
     @Transactional(readOnly = true)
-    public CasaDTO findById(Long id) {
-        Casa casa = findHome(id);
+    public CasaDTO findById(Long id, Long usuarioId) {
+        Casa casa = findHome(id, usuarioId);
         CasaDTO casaDTO = modelMapper.map(casa, CasaDTO.class);
         casaDTO.setUsuarioId(casa.getUsuario().getId());
         return casaDTO;
     }
 
-    public CasaDTO update(Long id, CasaDTO request) {
-        Casa casa = findHome(id);
+    public CasaDTO update(Long id, CasaDTO request, Long usuarioId) {
+        Casa casa = findHome(id, usuarioId);
         Usuario usuario = casa.getUsuario();
 
         modelMapper.map(request, casa);
@@ -82,15 +90,13 @@ public class CasaService {
         return casaDTO;
     }
 
-    public void delete(Long id) {
-        if (!casaRepositorio.existsById(id)) {
-            throw new ResourceNotFoundException("Casa no encontrada");
-        }
-        casaRepositorio.deleteById(id);
+    public void delete(Long id, Long usuarioId) {
+        Casa casa = findHome(id, usuarioId);
+        casaRepositorio.delete(casa);
     }
 
-    public ModoAusenteRespuestaDto updateAwayMode(Long homeId, ModoAusenteDto request) {
-        findHome(homeId);
+    public ModoAusenteRespuestaDto updateAwayMode(Long homeId, ModoAusenteDto request, Long usuarioId) {
+        findHome(homeId, usuarioId);
         int pausedRoutines = rutinaService.applyAwayMode(homeId, request.getModoAusente());
 
         return ModoAusenteRespuestaDto.builder()
@@ -100,8 +106,12 @@ public class CasaService {
                 .build();
     }
 
-    private Casa findHome(Long id) {
-        return casaRepositorio.findById(id)
+    private Casa findHome(Long id, Long usuarioId) {
+        Casa casa = casaRepositorio.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Casa no encontrada"));
+        if (!casa.getUsuario().getId().equals(usuarioId)) {
+            throw new ResourceNotFoundException("Casa no encontrada");
+        }
+        return casa;
     }
 }
