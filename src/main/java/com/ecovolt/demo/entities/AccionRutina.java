@@ -23,6 +23,6 @@ public class AccionRutina {
     @JoinColumn(name = "dispositivo_id", nullable = false)
     private DispositivoVirtual dispositivo;
 
-    @Column(name = "turn_on", nullable = false)
-    private Boolean turnOn;
+    @Column(name = "encender", nullable = false)
+    private boolean encender;
 }

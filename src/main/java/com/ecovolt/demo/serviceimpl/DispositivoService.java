@@ -44,6 +44,14 @@ public class DispositivoService {
         Habitacion habitacion = habitacionRepositorio.findById(request.getHabitacionId())
                 .orElseThrow(() -> new ResourceNotFoundException("Habitacion no encontrada"));
 
+        com.ecovolt.demo.entities.Usuario usuario = habitacion.getCasa().getUsuario();
+        if (usuario.getTipoUsuario() == com.ecovolt.demo.Enums.TipoUsuario.PERSONAL) {
+            List<DispositivoVirtual> userDevices = dispositivoVirtualRepositorio.findByHabitacionCasaUsuarioIdAndEliminadoFalseOrderByIdAsc(usuario.getId());
+            if (userDevices.size() >= 5) {
+                throw new com.ecovolt.demo.exceptions.BadRequestException("Tu plan Personal permite un máximo de 5 dispositivos. Actualiza a EcoVolt Empresarial para agregar dispositivos ilimitados.");
+            }
+        }
+
         DispositivoVirtual dispositivo = modelMapper.map(request, DispositivoVirtual.class);
         dispositivo.setNombre(request.getNombre().trim());
         dispositivo.setTipo(request.getTipo().trim());
