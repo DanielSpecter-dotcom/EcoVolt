@@ -2,8 +2,11 @@ package com.ecovolt.demo.entities;
 
 import jakarta.persistence.*;
 import lombok.*;
+import java.time.DayOfWeek;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "rutinas")
@@ -17,29 +20,31 @@ public class Rutina {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "casa_id", nullable = false)
+    private Casa casa;
+
     @Column(nullable = false)
     private String nombre;
 
-    @Column(name = "hora_inicio")
-    private LocalTime horaInicio;
+    @Column(name = "tiempo_ejecucion", nullable = false)
+    private LocalTime tiempoEjecucion;
 
-    @Column(name = "hora_fin")
-    private LocalTime horaFin;
+    @ElementCollection(targetClass = DayOfWeek.class, fetch = FetchType.EAGER)
+    @CollectionTable(name = "rutina_dias", joinColumns = @JoinColumn(name = "rutina_id"))
+    @Enumerated(EnumType.STRING)
+    @Column(name = "dia_semana")
+    private Set<DayOfWeek> diasSemana;
 
-    @Column(name = "dias_semana")
-    private String diasSemana; // Ej: "1,2,3,4,5" para Lunes a Viernes
+    @OneToMany(mappedBy = "rutina", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @Builder.Default
+    private List<AccionRutina> acciones = new ArrayList<>();
 
     @Column(name = "activo", nullable = false)
+    @Builder.Default
     private boolean activo = true;
 
     @Column(name = "pausado_ausente", nullable = false)
-    private boolean pausadoAusente = false; // Para el modo "Ausente"
-
-    @ManyToMany
-    @JoinTable(
-            name = "rutinas_dispositivos",
-            joinColumns = @JoinColumn(name = "rutina_id"),
-            inverseJoinColumns = @JoinColumn(name = "dispositivo_id")
-    )
-    private List<DispositivoVirtual> dispositivos;
+    @Builder.Default
+    private boolean pausadoAusente = false;
 }
