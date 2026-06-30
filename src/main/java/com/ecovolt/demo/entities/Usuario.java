@@ -48,6 +48,12 @@ public class Usuario {
     @Column(name = "ruc")
     private String ruc;
 
+    @Column(name = "telefono")
+    private String telefono;
+
+    @Column(name = "ciudad")
+    private String ciudad;
+
     @Column(nullable = false, columnDefinition = "boolean default false")
     @Builder.Default
     private boolean activo = false;

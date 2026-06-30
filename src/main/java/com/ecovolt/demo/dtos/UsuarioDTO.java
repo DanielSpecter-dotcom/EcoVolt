@@ -32,4 +32,8 @@ public class UsuarioDTO {
     private boolean notificarReporteSemanal;
 
     private List<String> roles;
+
+    private String telefono;
+
+    private String ciudad;
 }
