@@ -23,6 +23,8 @@ import java.util.List;
 public class AlertaService {
 
     private static final String EXCESS_CONSUMPTION = "CONSUMO_EXCESIVO";
+    private static final String WARNING_CONSUMPTION = "CONSUMO_ELEVADO";
+    private static final double WARNING_THRESHOLD = 0.75;
 
     private final DispositivoVirtualRepositorio dispositivoVirtualRepositorio;
     private final HistoricoRepositorio historicoRepositorio;
@@ -50,33 +52,20 @@ public class AlertaService {
             alerta.setFechaCreacion(LocalDateTime.now());
         }
 
-        alerta = alertaRepositorio.save(alerta);
-        AlertaDTO alertaDTO = modelMapper.map(alerta, AlertaDTO.class);
-        alertaDTO.setDeviceId(alerta.getDispositivo() == null ? null : alerta.getDispositivo().getId());
-        alertaDTO.setDeviceName(alerta.getDispositivo() == null ? null : alerta.getDispositivo().getNombre());
-        return alertaDTO;
+        return toDto(alertaRepositorio.save(alerta));
     }
 
     @Transactional(readOnly = true)
     public List<AlertaDTO> findAll(Long usuarioId) {
         return alertaRepositorio.findByDispositivoHabitacionCasaUsuarioIdOrderByFechaCreacionDesc(usuarioId)
                 .stream()
-                .map(alerta -> {
-                    AlertaDTO alertaDTO = modelMapper.map(alerta, AlertaDTO.class);
-                    alertaDTO.setDeviceId(alerta.getDispositivo() == null ? null : alerta.getDispositivo().getId());
-                    alertaDTO.setDeviceName(alerta.getDispositivo() == null ? null : alerta.getDispositivo().getNombre());
-                    return alertaDTO;
-                })
+                .map(this::toDto)
                 .toList();
     }
 
     @Transactional(readOnly = true)
     public AlertaDTO findById(Long id, Long usuarioId) {
-        Alerta alerta = findAlert(id, usuarioId);
-        AlertaDTO alertaDTO = modelMapper.map(alerta, AlertaDTO.class);
-        alertaDTO.setDeviceId(alerta.getDispositivo() == null ? null : alerta.getDispositivo().getId());
-        alertaDTO.setDeviceName(alerta.getDispositivo() == null ? null : alerta.getDispositivo().getNombre());
-        return alertaDTO;
+        return toDto(findAlert(id, usuarioId));
     }
 
     @Transactional
@@ -93,12 +82,7 @@ public class AlertaService {
     public List<AlertaDTO> obtenerHistorial(Long usuarioId) {
         return alertaRepositorio.findByDispositivoHabitacionCasaUsuarioIdOrderByFechaCreacionDesc(usuarioId)
                 .stream()
-                .map(alerta -> {
-                    AlertaDTO alertaDTO = modelMapper.map(alerta, AlertaDTO.class);
-                    alertaDTO.setDeviceId(alerta.getDispositivo() == null ? null : alerta.getDispositivo().getId());
-                    alertaDTO.setDeviceName(alerta.getDispositivo() == null ? null : alerta.getDispositivo().getNombre());
-                    return alertaDTO;
-                })
+                .map(this::toDto)
                 .toList();
     }
 
@@ -125,10 +109,7 @@ public class AlertaService {
             }
 
             if (valido) {
-                AlertaDTO alertaDTO = modelMapper.map(alerta, AlertaDTO.class);
-                alertaDTO.setDeviceId(alerta.getDispositivo() == null ? null : alerta.getDispositivo().getId());
-                alertaDTO.setDeviceName(alerta.getDispositivo() == null ? null : alerta.getDispositivo().getNombre());
-                respuesta.add(alertaDTO);
+                respuesta.add(toDto(alerta));
             }
         }
 
@@ -141,11 +122,7 @@ public class AlertaService {
                 .orElseThrow(() -> new ResourceNotFoundException("Alerta no encontrada"));
 
         alerta.setLeido(true);
-        alerta = alertaRepositorio.save(alerta);
-        AlertaDTO alertaDTO = modelMapper.map(alerta, AlertaDTO.class);
-        alertaDTO.setDeviceId(alerta.getDispositivo() == null ? null : alerta.getDispositivo().getId());
-        alertaDTO.setDeviceName(alerta.getDispositivo() == null ? null : alerta.getDispositivo().getNombre());
-        return alertaDTO;
+        return toDto(alertaRepositorio.save(alerta));
     }
 
     @Transactional
@@ -163,11 +140,7 @@ public class AlertaService {
             alerta.setFechaCreacion(fechaActual);
         }
 
-        alerta = alertaRepositorio.save(alerta);
-        AlertaDTO alertaDTO = modelMapper.map(alerta, AlertaDTO.class);
-        alertaDTO.setDeviceId(alerta.getDispositivo() == null ? null : alerta.getDispositivo().getId());
-        alertaDTO.setDeviceName(alerta.getDispositivo() == null ? null : alerta.getDispositivo().getNombre());
-        return alertaDTO;
+        return toDto(alertaRepositorio.save(alerta));
     }
 
     @Transactional
@@ -192,24 +165,71 @@ public class AlertaService {
     }
 
     private void crearAlertaSiSuperaLimite(DispositivoVirtual dispositivo, Long usuarioId) {
-        double consumoKwh = historicoRepositorio.findByDispositivoHabitacionCasaUsuarioIdOrderByFechaRegistroDesc(usuarioId)
+        if (dispositivo.getLimiteKwh() == null) return;
+
+        LocalDate inicioMes = LocalDate.now().withDayOfMonth(1);
+        LocalDate hoy = LocalDate.now();
+
+        double consumoMensualKwh = historicoRepositorio
+                .findByDispositivoIdAndDispositivoHabitacionCasaUsuarioIdOrderByFechaRegistroDesc(
+                        dispositivo.getId(), usuarioId)
                 .stream()
-                .filter(history -> history.getDispositivo().getId().equals(dispositivo.getId()))
-                .map(Historico::getKwhConsumidos)
-                .mapToDouble(Double::doubleValue)
+                .filter(h -> h.getKwhConsumidos() != null)
+                .filter(h -> {
+                    LocalDate fecha = h.getFechaRegistro().toLocalDate();
+                    return !fecha.isBefore(inicioMes) && !fecha.isAfter(hoy);
+                })
+                .mapToDouble(Historico::getKwhConsumidos)
                 .sum();
 
-        if (dispositivo.getLimiteKwh() == null || consumoKwh <= dispositivo.getLimiteKwh()) {
-            return;
-        }
+        double limite = dispositivo.getLimiteKwh();
+        double ratio = consumoMensualKwh / limite;
 
+        LocalDateTime inicioPeriodo = inicioMes.atStartOfDay();
+        LocalDateTime finPeriodo = LocalDateTime.now();
+
+        if (ratio > 1.0) {
+            if (!yaExisteAlertaEnPeriodo(dispositivo.getId(), EXCESS_CONSUMPTION, inicioPeriodo, finPeriodo)) {
+                guardarAlerta(EXCESS_CONSUMPTION,
+                        "El dispositivo " + dispositivo.getNombre()
+                                + " superó el límite mensual de " + limite
+                                + " kWh (consumo actual: " + String.format("%.1f", consumoMensualKwh) + " kWh)",
+                        dispositivo);
+            }
+        } else if (ratio >= WARNING_THRESHOLD) {
+            if (!yaExisteAlertaEnPeriodo(dispositivo.getId(), WARNING_CONSUMPTION, inicioPeriodo, finPeriodo)) {
+                guardarAlerta(WARNING_CONSUMPTION,
+                        "El dispositivo " + dispositivo.getNombre()
+                                + " alcanzó el " + String.format("%.0f", ratio * 100)
+                                + "% del límite mensual ("
+                                + String.format("%.1f", consumoMensualKwh) + " / " + limite + " kWh)",
+                        dispositivo);
+            }
+        }
+    }
+
+    // Evita recrear la misma alerta dentro del mismo periodo mensual, aunque el usuario ya la
+    // haya marcado como leída (mismo criterio que SimuladorConsumoService).
+    private boolean yaExisteAlertaEnPeriodo(Long dispositivoId, String tipo, LocalDateTime inicio, LocalDateTime fin) {
+        return alertaRepositorio.existsByDispositivoIdAndTipoAndLeidoFalse(dispositivoId, tipo)
+                || alertaRepositorio.existsByDispositivoIdAndTipoAndFechaCreacionBetween(dispositivoId, tipo, inicio, fin);
+    }
+
+    private void guardarAlerta(String tipo, String mensaje, DispositivoVirtual dispositivo) {
         alertaRepositorio.save(Alerta.builder()
-                .tipo(EXCESS_CONSUMPTION)
-                .mensaje("El dispositivo " + dispositivo.getNombre() + " supero el limite de consumo configurado")
+                .tipo(tipo)
+                .mensaje(mensaje)
                 .fechaCreacion(LocalDateTime.now())
                 .leido(false)
                 .dispositivo(dispositivo)
                 .build());
+    }
+
+    private AlertaDTO toDto(Alerta alerta) {
+        AlertaDTO dto = modelMapper.map(alerta, AlertaDTO.class);
+        dto.setDeviceId(alerta.getDispositivo() == null ? null : alerta.getDispositivo().getId());
+        dto.setDeviceName(alerta.getDispositivo() == null ? null : alerta.getDispositivo().getNombre());
+        return dto;
     }
 
     private Alerta findAlert(Long id, Long usuarioId) {
