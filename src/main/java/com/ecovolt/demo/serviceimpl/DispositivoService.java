@@ -63,8 +63,6 @@ public class DispositivoService {
         dispositivo.setHabitacion(habitacion);
         dispositivo = dispositivoVirtualRepositorio.save(dispositivo);
 
-        historicoRepositorio.saveAll(buildSimulatedConsumption(dispositivo));
-
         DispositivoDTO dispositivoDTO = modelMapper.map(dispositivo, DispositivoDTO.class);
         dispositivoDTO.setStatus(dispositivo.isActivo() ? "ON" : "OFF");
         dispositivoDTO.setMode(dispositivo.isAutomatico() ? "AUTOMATIC" : "MANUAL");
@@ -124,8 +122,8 @@ public class DispositivoService {
     }
 
     @Transactional
-    public void delete(Long id) {
-        DispositivoVirtual dispositivo = findActiveDevice(id);
+    public void delete(Long id, Long usuarioId) {
+        DispositivoVirtual dispositivo = findActiveDeviceOwnedByUser(id, usuarioId);
         dispositivo.setActivo(false);
         dispositivo.setEliminado(true);
         dispositivoVirtualRepositorio.save(dispositivo);
@@ -189,20 +187,6 @@ public class DispositivoService {
         return dispositivoDTO;
     }
 
-    private List<Historico> buildSimulatedConsumption(DispositivoVirtual dispositivo) {
-        int estimatedHours = estimateDailyUsageHours(dispositivo.getTipo());
-
-        return List.of(
-                buildHistory(dispositivo, 6, Math.max(1, estimatedHours - 1)),
-                buildHistory(dispositivo, 5, estimatedHours),
-                buildHistory(dispositivo, 4, estimatedHours + 1),
-                buildHistory(dispositivo, 3, estimatedHours),
-                buildHistory(dispositivo, 2, Math.max(1, estimatedHours - 2)),
-                buildHistory(dispositivo, 1, estimatedHours + 2),
-                buildHistory(dispositivo, 0, estimatedHours)
-        );
-    }
-
     private Historico buildHistory(DispositivoVirtual dispositivo, int daysAgo, int hours) {
         int minutes = hours * 60;
         double kwh = (dispositivo.getPotenciaWatts() * hours) / 1000.0;
@@ -246,6 +230,14 @@ public class DispositivoService {
     private DispositivoVirtual findActiveDevice(Long id) {
         return dispositivoVirtualRepositorio.findByIdAndEliminadoFalse(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Dispositivo no encontrado"));
+    }
+
+    private DispositivoVirtual findActiveDeviceOwnedByUser(Long id, Long usuarioId) {
+        DispositivoVirtual dispositivo = findActiveDevice(id);
+        if (!dispositivo.getHabitacion().getCasa().getUsuario().getId().equals(usuarioId)) {
+            throw new ResourceNotFoundException("Dispositivo no encontrado");
+        }
+        return dispositivo;
     }
 
     private Habitacion findRoomInSameHome(DispositivoVirtual dispositivo, Long roomId) {
