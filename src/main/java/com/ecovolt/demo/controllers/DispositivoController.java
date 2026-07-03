@@ -89,8 +89,10 @@ public class DispositivoController {
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Dispositivo eliminado")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Dispositivo no encontrado")
     @DeleteMapping("/{id}")
-    public ResponseEntity<RespuestaApi<Void>> delete(@PathVariable Long id) {
-        dispositivoService.delete(id);
+    public ResponseEntity<RespuestaApi<Void>> delete(
+            @PathVariable Long id,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        dispositivoService.delete(id, userDetails.getId());
         return ResponseEntity.ok(new RespuestaApi<>(true, "Dispositivo eliminado exitosamente", null));
     }
 

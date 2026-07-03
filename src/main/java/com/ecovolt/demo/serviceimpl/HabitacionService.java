@@ -88,10 +88,17 @@ public class HabitacionService {
     }
 
     @Transactional
-    public void delete(Long id) {
-        if (!habitacionRepositorio.existsById(id)) {
+    public void delete(Long id, Long usuarioId) {
+        Habitacion habitacion = findRoomOwnedByUser(id, usuarioId);
+        habitacionRepositorio.delete(habitacion);
+    }
+
+    private Habitacion findRoomOwnedByUser(Long id, Long usuarioId) {
+        Habitacion habitacion = habitacionRepositorio.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Habitacion no encontrada"));
+        if (!habitacion.getCasa().getUsuario().getId().equals(usuarioId)) {
             throw new ResourceNotFoundException("Habitacion no encontrada");
         }
-        habitacionRepositorio.deleteById(id);
+        return habitacion;
     }
 }

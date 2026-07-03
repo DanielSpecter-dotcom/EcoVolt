@@ -7,21 +7,12 @@ import com.ecovolt.demo.dtos.VerificarCorreoDto;
 import com.ecovolt.demo.dtos.InicioSesionRespuestaDto;
 import com.ecovolt.demo.dtos.ReniecRespuesta;
 import com.ecovolt.demo.dtos.VerificacionEnviadaRespuestaDto;
-import com.ecovolt.demo.entities.Casa;
-import com.ecovolt.demo.entities.Habitacion;
-import com.ecovolt.demo.entities.Historico;
 import com.ecovolt.demo.entities.Rol;
 import com.ecovolt.demo.entities.Usuario;
-import com.ecovolt.demo.entities.DispositivoVirtual;
-import com.ecovolt.demo.Enums.TipoUsuario;
 import com.ecovolt.demo.exceptions.BadRequestException;
 import com.ecovolt.demo.exceptions.ResourceNotFoundException;
-import com.ecovolt.demo.repositories.CasaRepositorio;
-import com.ecovolt.demo.repositories.HabitacionRepositorio;
-import com.ecovolt.demo.repositories.HistoricoRepositorio;
 import com.ecovolt.demo.repositories.RolRepositorio;
 import com.ecovolt.demo.repositories.UsuarioRepositorio;
-import com.ecovolt.demo.repositories.DispositivoVirtualRepositorio;
 import com.ecovolt.demo.security.JwtService;
 import com.ecovolt.demo.services.feingservice.ReniecClient;
 import org.modelmapper.ModelMapper;
@@ -36,7 +27,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.List;
 
 @Service
 public class AutenticacionService {
@@ -45,10 +35,6 @@ public class AutenticacionService {
     private static final long VERIFICATION_TOKEN_EXPIRATION_MILLIS = TOKEN_EXPIRATION_HOURS * 60L * 60L * 1000L;
     private final UsuarioRepositorio usuarioRepositorio;
     private final RolRepositorio rolRepositorio;
-    private final CasaRepositorio casaRepositorio;
-    private final HabitacionRepositorio habitacionRepositorio;
-    private final DispositivoVirtualRepositorio dispositivoVirtualRepositorio;
-    private final HistoricoRepositorio historicoRepositorio;
     private final ReniecClient reniecClient;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
@@ -61,10 +47,6 @@ public class AutenticacionService {
 
     public AutenticacionService(UsuarioRepositorio usuarioRepositorio,
                                 RolRepositorio rolRepositorio,
-                                CasaRepositorio casaRepositorio,
-                                HabitacionRepositorio habitacionRepositorio,
-                                DispositivoVirtualRepositorio dispositivoVirtualRepositorio,
-                                HistoricoRepositorio historicoRepositorio,
                                 ReniecClient reniecClient,
                                 PasswordEncoder passwordEncoder,
                                 AuthenticationManager authenticationManager,
@@ -73,10 +55,6 @@ public class AutenticacionService {
                                 EmailService emailService) {
         this.usuarioRepositorio = usuarioRepositorio;
         this.rolRepositorio = rolRepositorio;
-        this.casaRepositorio = casaRepositorio;
-        this.habitacionRepositorio = habitacionRepositorio;
-        this.dispositivoVirtualRepositorio = dispositivoVirtualRepositorio;
-        this.historicoRepositorio = historicoRepositorio;
         this.reniecClient = reniecClient;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
@@ -127,10 +105,6 @@ public class AutenticacionService {
 
         Usuario usuarioGuardado = usuarioRepositorio.save(usuario);
 
-        if (usuarioGuardado.getTipoUsuario() == TipoUsuario.PERSONAL) {
-            createDemoHome(usuarioGuardado);
-        }
-
         return sendVerificationEmail(usuarioGuardado);
     }
 
@@ -171,56 +145,6 @@ public class AutenticacionService {
         Usuario usuarioGuardado = usuarioRepositorio.save(usuario);
 
         return sendVerificationEmail(usuarioGuardado);
-    }
-
-    private void createDemoHome(Usuario usuario) {
-        Casa casa = casaRepositorio.save(Casa.builder()
-                .nombre("Hogar virtual de ejemplo")
-                .usuario(usuario)
-                .build());
-
-        Habitacion habitacion = habitacionRepositorio.save(Habitacion.builder()
-                .nombre("Sala principal")
-                .casa(casa)
-                .build());
-
-        createDemoDevice(habitacion, "Luz LED", "luz", 10.0, 5);
-        createDemoDevice(habitacion, "TV Smart", "TV", 120.0, 4);
-        createDemoDevice(habitacion, "Refrigerador", "refrigerador", 150.0, 8);
-    }
-
-    private void createDemoDevice(Habitacion habitacion, String nombre, String tipo, double watts, int horasUso) {
-        DispositivoVirtual dispositivo = dispositivoVirtualRepositorio.save(DispositivoVirtual.builder()
-                .nombre(nombre)
-                .tipo(tipo)
-                .potenciaWatts(watts)
-                .activo(false)
-                .automatico(false)
-                .eliminado(false)
-                .habitacion(habitacion)
-                .build());
-
-        historicoRepositorio.saveAll(buildInitialHistory(dispositivo, horasUso));
-    }
-
-    private List<Historico> buildInitialHistory(DispositivoVirtual dispositivo, int horasUsoEstimado) {
-        return List.of(
-                buildHistory(dispositivo, 3, horasUsoEstimado),
-                buildHistory(dispositivo, 2, horasUsoEstimado + 1),
-                buildHistory(dispositivo, 1, Math.max(1, horasUsoEstimado - 1))
-        );
-    }
-
-    private Historico buildHistory(DispositivoVirtual dispositivo, int daysAgo, int horasUso) {
-        int minutos = horasUso * 60;
-        double kwh = (dispositivo.getPotenciaWatts() * horasUso) / 1000.0;
-
-        return Historico.builder()
-                .fechaRegistro(LocalDateTime.now().minusDays(daysAgo))
-                .kwhConsumidos(kwh)
-                .duracionMinutos(minutos)
-                .dispositivo(dispositivo)
-                .build();
     }
 
     private VerificacionEnviadaRespuestaDto sendVerificationEmail(Usuario usuario) {

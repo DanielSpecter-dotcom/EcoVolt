@@ -63,8 +63,10 @@ public class HabitacionController {
     }
 
     @DeleteMapping("/eliminarhabitacion/{id}")
-    public ResponseEntity<RespuestaApi<Void>> delete(@PathVariable Long id) {
-        habitacionService.delete(id);
+    public ResponseEntity<RespuestaApi<Void>> delete(
+            @PathVariable Long id,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        habitacionService.delete(id, userDetails.getId());
         return ResponseEntity.ok(new RespuestaApi<>(true, "Ambiente eliminado exitosamente", null));
     }
 }
