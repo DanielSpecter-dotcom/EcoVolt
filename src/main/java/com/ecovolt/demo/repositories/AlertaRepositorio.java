@@ -3,6 +3,7 @@ package com.ecovolt.demo.repositories;
 import com.ecovolt.demo.entities.Alerta;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -13,4 +14,7 @@ public interface AlertaRepositorio extends JpaRepository<Alerta, Long> {
     Optional<Alerta> findByIdAndDispositivoHabitacionCasaUsuarioId(Long id, Long usuarioId);
 
     boolean existsByDispositivoIdAndTipoAndLeidoFalse(Long dispositivoId, String tipo);
+
+    boolean existsByDispositivoIdAndTipoAndFechaCreacionBetween(
+            Long dispositivoId, String tipo, LocalDateTime inicio, LocalDateTime fin);
 }

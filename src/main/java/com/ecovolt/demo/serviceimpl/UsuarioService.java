@@ -86,6 +86,15 @@ public class UsuarioService {
         if (usuario.getCiudad() != null) {
             usuario.setCiudad(usuario.getCiudad().trim());
         }
+        if (request.getTipoUsuario() != null) {
+            usuario.setTipoUsuario(request.getTipoUsuario());
+            
+            String roleName = request.getTipoUsuario().name();
+            Rol newRole = rolRepositorio.findByNombre(roleName)
+                    .orElseGet(() -> rolRepositorio.save(Rol.builder().nombre(roleName).build()));
+            usuario.getRoles().clear();
+            usuario.getRoles().add(newRole);
+        }
 
         usuario = usuarioRepositorio.save(usuario);
         UsuarioDTO usuarioDTO = modelMapper.map(usuario, UsuarioDTO.class);
