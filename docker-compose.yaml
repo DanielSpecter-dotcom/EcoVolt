@@ -22,6 +22,7 @@ services:
       - API_TOKEN=sk_14050.w5IiZP8rPe5uRDITZ6LnIPyDDBnO9hK5
       - SECURITY_JWT_SECRET=ElLadoMisteriosoDeLaIslaWuuWuuXD
       - SECURITY_JWT_EXPIRATION_MS=86400000
+      - APP_FRONTEND_URL=${APP_FRONTEND_URL:-http://localhost:4200}
 
   db:
     image: postgres:16-alpine
