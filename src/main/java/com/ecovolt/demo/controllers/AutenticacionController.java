@@ -11,6 +11,7 @@ import com.ecovolt.demo.dtos.InicioSesionRespuestaDto;
 import com.ecovolt.demo.dtos.VerificacionEnviadaRespuestaDto;
 import com.ecovolt.demo.serviceimpl.AutenticacionService;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -28,7 +29,9 @@ public class AutenticacionController {
     @PostMapping("/login")
     public ResponseEntity<RespuestaApi<InicioSesionRespuestaDto>> login(@Valid @RequestBody InicioSesionSolicitudDto request) {
         InicioSesionRespuestaDto data = autenticacionService.login(request);
-        return ResponseEntity.ok(new RespuestaApi<>(true, "Autenticacion exitosa", data));
+        return ResponseEntity.ok()
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + data.getToken())
+                .body(new RespuestaApi<>(true, "Autenticacion exitosa", data));
     }
 
     @PostMapping("/register")
