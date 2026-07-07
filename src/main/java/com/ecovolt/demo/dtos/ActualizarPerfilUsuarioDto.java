@@ -1,5 +1,7 @@
 package com.ecovolt.demo.dtos;
 
+import com.ecovolt.demo.Enums.TipoUsuario;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
@@ -21,4 +23,7 @@ public class ActualizarPerfilUsuarioDto {
     private String telefono;
 
     private String ciudad;
+
+    @JsonProperty("tipo_usuario")
+    private TipoUsuario tipoUsuario;
 }

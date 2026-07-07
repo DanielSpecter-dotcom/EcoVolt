@@ -25,6 +25,8 @@ public class SimuladorConsumoService {
     private static final int INTERVALO_SEGUNDOS = 30;
     private static final int DURACION_MINIMA_MINUTOS = 1;
     private static final String CONSUMO_EXCESIVO = "CONSUMO_EXCESIVO";
+    private static final String CONSUMO_ELEVADO = "CONSUMO_ELEVADO";
+    private static final double WARNING_THRESHOLD = 0.75;
 
     private final DispositivoVirtualRepositorio dispositivoRepo;
     private final HistoricoRepositorio historicoRepo;
@@ -80,28 +82,63 @@ public class SimuladorConsumoService {
     }
 
     private void crearAlertaSiSuperaLimite(DispositivoVirtual dispositivo) {
-        if (dispositivo.getLimiteKwh() == null) {
-            return;
-        }
+        if (dispositivo.getLimiteKwh() == null) return;
 
-        double consumoAcumulado = historicoRepo.findByDispositivoId(dispositivo.getId())
+        LocalDate inicioMes = LocalDate.now().withDayOfMonth(1);
+        LocalDate hoy = LocalDate.now();
+
+        double consumoMensual = historicoRepo.findByDispositivoId(dispositivo.getId())
                 .stream()
-                .map(Historico::getKwhConsumidos)
-                .filter(kwh -> kwh != null)
-                .mapToDouble(Double::doubleValue)
+                .filter(h -> h.getKwhConsumidos() != null)
+                .filter(h -> {
+                    LocalDate fecha = h.getFechaRegistro().toLocalDate();
+                    return !fecha.isBefore(inicioMes) && !fecha.isAfter(hoy);
+                })
+                .mapToDouble(Historico::getKwhConsumidos)
                 .sum();
 
-        if (consumoAcumulado <= dispositivo.getLimiteKwh()
-                || alertaRepo.existsByDispositivoIdAndTipoAndLeidoFalse(dispositivo.getId(), CONSUMO_EXCESIVO)) {
-            return;
-        }
+        double limite = dispositivo.getLimiteKwh();
+        double ratio = consumoMensual / limite;
 
-        alertaRepo.save(Alerta.builder()
-                .tipo(CONSUMO_EXCESIVO)
-                .mensaje("El dispositivo " + dispositivo.getNombre() + " supero el limite de consumo configurado")
-                .fechaCreacion(LocalDateTime.now())
-                .leido(false)
-                .dispositivo(dispositivo)
-                .build());
+        LocalDateTime inicioPeriodo = inicioMes.atStartOfDay();
+        LocalDateTime finPeriodo = LocalDateTime.now();
+
+        if (ratio > 1.0) {
+            if (!yaExisteAlertaEnPeriodo(dispositivo.getId(), CONSUMO_EXCESIVO, inicioPeriodo, finPeriodo)) {
+                alertaRepo.save(Alerta.builder()
+                        .tipo(CONSUMO_EXCESIVO)
+                        .mensaje("El dispositivo " + dispositivo.getNombre()
+                                + " superó el límite mensual de " + limite
+                                + " kWh (consumo actual: " + String.format("%.1f", consumoMensual) + " kWh)")
+                        .fechaCreacion(LocalDateTime.now())
+                        .leido(false)
+                        .dispositivo(dispositivo)
+                        .build());
+            }
+        } else if (ratio >= WARNING_THRESHOLD) {
+            if (!yaExisteAlertaEnPeriodo(dispositivo.getId(), CONSUMO_ELEVADO, inicioPeriodo, finPeriodo)) {
+                alertaRepo.save(Alerta.builder()
+                        .tipo(CONSUMO_ELEVADO)
+                        .mensaje("El dispositivo " + dispositivo.getNombre()
+                                + " alcanzó el " + String.format("%.0f", ratio * 100)
+                                + "% del límite mensual ("
+                                + String.format("%.1f", consumoMensual) + " / " + limite + " kWh)")
+                        .fechaCreacion(LocalDateTime.now())
+                        .leido(false)
+                        .dispositivo(dispositivo)
+                        .build());
+            }
+        }
+    }
+
+    /**
+     * Evita recrear la misma alerta en cada ciclo de simulación: una vez generada para un
+     * dispositivo+tipo dentro del periodo mensual vigente, no se vuelve a crear aunque el
+     * usuario ya la haya marcado como leída (de lo contrario se duplicaría cada 30s mientras
+     * el consumo siga por encima del umbral).
+     */
+    private boolean yaExisteAlertaEnPeriodo(Long dispositivoId, String tipo, LocalDateTime inicio, LocalDateTime fin) {
+        return alertaRepo.existsByDispositivoIdAndTipoAndLeidoFalse(dispositivoId, tipo)
+                || alertaRepo.existsByDispositivoIdAndTipoAndFechaCreacionBetween(dispositivoId, tipo, inicio, fin);
     }
 }

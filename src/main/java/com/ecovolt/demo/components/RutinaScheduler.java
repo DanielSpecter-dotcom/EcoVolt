@@ -2,13 +2,18 @@ package com.ecovolt.demo.components;
 
 import com.ecovolt.demo.dtos.EstadoActualDispositivoDto;
 import com.ecovolt.demo.dtos.RutinaDTO;
+import com.ecovolt.demo.entities.Alerta;
+import com.ecovolt.demo.repositories.AlertaRepositorio;
+import com.ecovolt.demo.repositories.DispositivoVirtualRepositorio;
 import com.ecovolt.demo.services.RoutineService;
 import com.ecovolt.demo.serviceimpl.DispositivoService;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
@@ -19,13 +24,21 @@ public class RutinaScheduler {
 
     private final RoutineService routineService;
     private final DispositivoService dispositivoService;
+    private final AlertaRepositorio alertaRepositorio;
+    private final DispositivoVirtualRepositorio dispositivoVirtualRepositorio;
 
-    public RutinaScheduler(RoutineService routineService, DispositivoService dispositivoService) {
+    public RutinaScheduler(RoutineService routineService,
+                           DispositivoService dispositivoService,
+                           AlertaRepositorio alertaRepositorio,
+                           DispositivoVirtualRepositorio dispositivoVirtualRepositorio) {
         this.routineService = routineService;
         this.dispositivoService = dispositivoService;
+        this.alertaRepositorio = alertaRepositorio;
+        this.dispositivoVirtualRepositorio = dispositivoVirtualRepositorio;
     }
 
     @Scheduled(cron = "0 * * * * *") // cada minuto en el segundo 0
+    @Transactional
     public void ejecutarRutinas() {
         ZoneId lima = ZoneId.of("America/Lima");
         LocalTime ahora = LocalTime.now(lima).truncatedTo(ChronoUnit.MINUTES);
@@ -43,12 +56,23 @@ public class RutinaScheduler {
 
             if (debeEjecutarse && rutina.getActions() != null) {
                 rutina.getActions().forEach(accion -> {
+                    boolean encender = Boolean.TRUE.equals(accion.getTurnOn());
                     EstadoActualDispositivoDto estado = new EstadoActualDispositivoDto();
-                    estado.setStatus(Boolean.TRUE.equals(accion.getTurnOn()) ? "ON" : "OFF");
+                    estado.setStatus(encender ? "ON" : "OFF");
                     try {
                         dispositivoService.updateStatus(accion.getDeviceId(), estado);
+                        dispositivoVirtualRepositorio.findById(accion.getDeviceId()).ifPresent(dispositivo -> {
+                            String accionTexto = encender ? "encendió" : "apagó";
+                            alertaRepositorio.save(Alerta.builder()
+                                    .tipo("INFO")
+                                    .mensaje("La rutina '" + rutina.getName() + "' " + accionTexto
+                                            + " el dispositivo " + dispositivo.getNombre())
+                                    .fechaCreacion(LocalDateTime.now())
+                                    .leido(false)
+                                    .dispositivo(dispositivo)
+                                    .build());
+                        });
                     } catch (Exception e) {
-                        // log el error pero no romper el loop para las demás acciones
                         System.err.println("Error ejecutando acción en dispositivo "
                                 + accion.getDeviceId() + ": " + e.getMessage());
                     }
